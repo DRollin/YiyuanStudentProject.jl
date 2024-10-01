@@ -9,6 +9,7 @@ using SparseArrays
 using BubbleBath
 using Distributions: Uniform
 using LaTeXStrings
+using WriteVTK
 
 import Makie, GeometryBasics
 
@@ -36,8 +37,6 @@ export pre_Material, iso_pv_Material,
     get_radius_pdf, get_tags_from_dimtags
 
     # Upscaling
-
-include("upscaling/types.jl")
 include("upscaling/averaging.jl")
 include("upscaling/sensitivities.jl")
 

@@ -1,33 +1,43 @@
-################################################################
-# Assembly M
-################################################################
+function doassemble_K_f!(problem::pv_Problem, Δt)
+	(; setup, K, f, a, a_old, assembler) = problem
+    (; sets, setups) = setup
+    
 
-function assemble_M(setup::FESetup)
-	(; dh, ch, cellsets, elementsetups) = setup
-    M = create_sparsity_pattern(dh, ch)
-    assembler = start_assemble(M)
-    for (cellset, elementsetup) in zip(cellsets, elementsetups)
-        assemble_M!(assembler, cellset, elementsetup)
+    for (cellset, elementsetup) in zip(sets, setups)
+        assemble_K_f!(assembler, cellset, elementsetup, a, a_old, Δt)
     end
-    return M
+    
 end
 
-function assemble_M!(assembler, cellset::Set{Int}, setup::BulkElementSetup)
-    Mₑ = zeros(setup.nbf, setup.nbf)
-    for cc in CellIterator(setup.dh, cellset)
-        Ferrite.reinit!(setup.cv, cc)
-        fill!(Mₑ, 0)
-        Mₑ = assemble_Mₑ!(Mₑ, setup)
-        assemble!(assembler, celldofs(cc), Mₑ)
+function assemble_K_f!(assembler, cellset::Set{Int}, setup::iso_pv_ElementSetup, a, a_old, Δt)
+    Ke = zeros(setup.nbf, setup.nbf)
+    fe = zeros(setup.nbf)
+    ae = zeros(setup.nbf)
+    ae_old = zeros(setup.nbf)
+    
+    for cc in CellIterator(setup.cells, cellset)
+        map!(i->a[i], ae, celldofs(cc))
+        map!(i->a_old[i], ae_old, celldofs(cc))
+
+        fill!(Ke, 0)
+        fill!(fe, 0)
+
+        reinit!.(setup.cv, cc)
+        assemble_Ke_fe!(Ke, fe, setup, cc, ae, ae_old, Δt)
+        assemble!(assembler, celldofs(cc), Ke, fe)
     end
-    return assembler
+    
 end
 
-function assemble_Mₑ!(Mₑ::Matrix, setup::BulkElementSetup)
+function assemble_Ke_fe!(Ke::Matrix, fe::Vector, setup::iso_pv_ElementSetup, cell, ae, ae_old, Δt)
     (; cv, nbf, material) = setup
-    (; k) = material
-    for qp in 1:getnquadpoints(cv)
-        dΩ = getdetJdV(cv, qp)
+    (; E, Κ, α, β) = material
+    ae_u = @view ae[dof_range(cell, :μ)]
+
+    for qp in 1:getnquadpoints(cv.u)
+        dΩ = getdetJdV(cv.u, qp)
+        p = function_value(cv.p, qp, a, dof_range(dh, :p))
+
         for i in 1:nbf
             δu = shape_value(cv, qp, i)
             for j in 1:nbf
@@ -83,41 +93,6 @@ function assemble_Kₑ!(Kₑ::Matrix, setup::BulkElementSetup)
 end
 
 ################################################################
-# Assembly C
-################################################################
-
-function assemble_C(setup::FESetup{dim}) where {dim}
-	(; dh, sets, setups) = setup
-    C = spzeros(1, ndofs(dh))
-    assemble_C!(C, sets.P, setups.P)
-    assemble_C!(C, sets.M, setups.M)
-    return C
-end
-
-function assemble_C!(C::SparseMatrixCSC, cellset::Set{Int}, setup::BulkElementSetup)
-    Cₑ = zeros(1, setup.nbf)
-    for cc in CellIterator(setup.cells, cellset)
-        Ferrite.reinit!(setup.cv, cc)
-        fill!(Cₑ, 0)
-        Cₑ = assemble_Cₑ!(Cₑ, setup)
-        C[: , celldofs(cc)] .+= Cₑ
-    end
-    return C
-end
-
-function assemble_Cₑ!(Cₑ::Matrix, setup::BulkElementSetup)
-    (; cv, nbf) = setup
-    for qp in 1:getnquadpoints(cv)
-        dΩ = getdetJdV(cv, qp)
-        for j in 1:nbf
-            u  = shape_value(cv, qp, j)
-            Cₑ[1, j]  +=  u * dΩ
-        end
-    end
-    return Cₑ
-end
-
-################################################################
 # Preparing system
 ################################################################
 
@@ -133,7 +108,7 @@ end
 function assemble_rve_system(setup::FESetup{dim}) where {dim}
     (; dh, ch, Load) = setup
 
-    K = assemble_K(setup)# TODO: Do not assemble everything anew every time
+    K = assemble_K(setup)
     C = assemble_C(setup)
     f = zeros(ndofs(dh))
 
@@ -142,12 +117,4 @@ function assemble_rve_system(setup::FESetup{dim}) where {dim}
     apply!(K, f, ch)
 
     return K, f
-end
-
-function assemble_dns_system(setup::FESetup{dim}) where {dim}
-    (; dh) = setup
-    M = assemble_M(setup)
-    K = assemble_K(setup)
-    f = zeros(ndofs(dh))
-    return M, K, f
 end

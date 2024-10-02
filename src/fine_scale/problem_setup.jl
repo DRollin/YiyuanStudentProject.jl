@@ -18,8 +18,10 @@ function prepare_base_setup(grid::Grid{dim}) where {dim}
 	ip  = (u = Lagrange{2,bshape,1}()^(dim), p = Lagrange{2,bshape,1}())
 
 	dh = DofHandler(grid)
-	push!(dh, :u, 2, ip)
-	push!(dh, :p, 1, ip)
+	add!(dh, :u, ip.u)
+	add!(dh, :p, ip.p)
+	#push!(dh, :u, 2, ip)
+	#push!(dh, :p, 1, ip)
 	close!(dh)
 
 	qr  = QuadratureRule{dim, bshape}(4)

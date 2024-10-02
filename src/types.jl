@@ -13,7 +13,7 @@ function elastic_stiffness(G, K)
     return 2*G*(I4sym-I4vol) + 3*K*I4vol
 end
 
-function Material_pre{dim}(; G::Number, K::Number, κ::Number, α::Number, β::Number) where {dim}
+function Material_pre(G::Number, K::Number, κ::Number, α::Number, β::Number, dim)
     return iso_pv_Material{dim}(elastic_stiffness(G, K), Tensor{2,dim,Float64}( (i,j) -> κ ), α, β)
 end
 
@@ -31,8 +31,8 @@ struct LoadCase{dim}
 	μ̄::Float64
     ζ̄::Tensor{1,dim,Float64}
 end
-function LoadCase{dim}(; μ̄=0.0, ζ̄₁=0.0, ζ̄₂=0.0)
-	return LoadCase{dim}( μ̄, Tensor{1,2,Float64}(( ζ̄₁, ζ̄₂)) )
+function LoadCase(μ̄=0.0, ζ̄₁=0.0, ζ̄₂=0.0, dim)
+	return LoadCase{dim}( μ̄, Tensor{1,dim,Float64}(( ζ̄₁, ζ̄₂, ζ̄)) )
 end
 
 struct iso_pv_ElementSetup{dim}
@@ -59,7 +59,6 @@ struct pv_Problem{T, TT<:AbstractTensor, Ti, dim}
     f::Vector{T}
     a::Vector{TT}
     a_old::Vector{TT}
-    assembler::Ferrite.AssemblerSparsityPattern{T,Ti}
 end
 
 

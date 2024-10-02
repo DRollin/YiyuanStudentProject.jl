@@ -4,9 +4,9 @@ function solve_load_case(problem::RVEProblem{dim}, load::LoadCase{dim}) where {d
     f = zeros(ndofs(setup.dh))
     a = zeros(ndofs(setup.dh))
 	a_old = copy(a)
-	assembler = start_assemble(K,f)
+	
 
-	pv_problem = pv_Problem{dim}(setup, K, f, a, a_old, assembler)
+	pv_problem = pv_Problem{dim}(setup, K, f, a, a_old)
 
 	pvd = paraview_collection("porous_media")
     step = 0
@@ -57,23 +57,20 @@ end;
     return res, setup
 end=#
 
-function solve_RVE_prepare()
+function solve_RVE()
     dim_rve = 3 
     #Material properties
-    ηe = 1.0
-    μᵣₑ = 1.0
-    cᵣₑ = 1.0
-    θᵣₑ = 1.0
-    cₘ = 1.0
-    R = 8.31446261815324
-    δ(i,j) = i == j ? 1.0 : 0.0
-    η = Tensor{2,dim_rve,Float64}( (i,j) -> δ(i,j)*ηe )
-    k = R*θᵣₑ/cₘ
-    P = BulkMaterial{dim_rve}(η, k, μᵣₑ, cᵣₑ)
-    M = BulkMaterial{dim_rve}(η, k, μᵣₑ, cᵣₑ)
+    G = 80e3
+    K = 160e3
+    κ = 0.05
+    α = 0.9
+    β = 1/15e3
+
+    P = Material_pre(G, K, κ, α, β, dim_rve)
+    M = Material_pre(G, K, κ, α, β, dim_rve)
 
     #RVE problem setups
-    Load = LoadCase{dim_rve}()
+    Load = LoadCase(1.0, 0.0, dim_rve)
 
     #Grid
     d = 0.1 
@@ -84,20 +81,20 @@ function solve_RVE_prepare()
 
     rve_problem = RVEProblem{dim_rve}(rve_grid, P, M)
 
-    u, setup = solve_load_case(rve_problem, Load)
+    solve_load_case(rve_problem, Load)
 
-    return u, setup, rve_grid, rve_problem
+    
 end
 
 
-u, setup, grid, problem = solve_RVE_prepare()
+#u, setup, grid, problem = solve_RVE_prepare()
 
-Δt = 1
+#Δt = 1
 
-@time res, (grid1, dh1, ch1, cv1) = solve_macro_problem(grid, problem, Δt, steps=0.0:10.0:1000.0)
+#@time res, (grid1, dh1, ch1, cv1) = solve_macro_problem(grid, problem, Δt, steps=0.0:10.0:1000.0)
 
-t, u = select_state(res, 5.0)
+#t, u = select_state(res, 5.0)
 
-vtk_grid("Macro_potential_$t", dh1) do vtk
-    vtk_point_data(vtk, dh1, u, "u")
-end
+#vtk_grid("Macro_potential_$t", dh1) do vtk
+#    vtk_point_data(vtk, dh1, u, "u")
+#end

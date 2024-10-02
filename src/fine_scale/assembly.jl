@@ -1,8 +1,8 @@
 function doassemble_K_f!(problem::pv_Problem, Δt)
-	(; setup, K, f, a, a_old, assembler) = problem
+	(; setup, K, f, a, a_old) = problem
     (; sets, setups) = setup
     
-
+    assembler = start_assemble(K,f)
     for (cellset, elementsetup) in zip(sets, setups)
         assemble_K_f!(assembler, cellset, elementsetup, a, a_old, Δt)
     end
@@ -23,98 +23,74 @@ function assemble_K_f!(assembler, cellset::Set{Int}, setup::iso_pv_ElementSetup,
         fill!(fe, 0)
 
         reinit!.(setup.cv, cc)
-        assemble_Ke_fe!(Ke, fe, setup, cc, ae, ae_old, Δt)
+        assemble_Ke_fe!(Ke, fe, setup, ae, ae_old, Δt)
         assemble!(assembler, celldofs(cc), Ke, fe)
     end
     
 end
 
-function assemble_Ke_fe!(Ke::Matrix, fe::Vector, setup::iso_pv_ElementSetup, cell, ae, ae_old, Δt)
-    (; cv, nbf, material) = setup
+function assemble_Ke_fe!(Ke::Matrix, fe::Vector, setup::iso_pv_ElementSetup, ae, ae_old, Δt)
+    (; cells, cv, nbf, material) = setup
     (; E, Κ, α, β) = material
-    ae_u = @view ae[dof_range(cell, :μ)]
+
+    ae_u = @view ae[dof_range(cells, :u)]
+    ae_p = @view ae[dof_range(cells, :p)]
+    fe_u = @view fe[dof_range(cells, :u)]
+    fe_p = @view fe[dof_range(cells, :p)]
+    Ke_u_u = @view Ke[[dof_range(cells, :u)], [dof_range(cells, :u)]]
+    Ke_u_p = @view Ke[[dof_range(cells, :u)], [dof_range(cells, :p)]]
+    Ke_p_u = @view Ke[[dof_range(cells, :p)], [dof_range(cells, :u)]]
+    Ke_p_p = @view Ke[[dof_range(cells, :p)], [dof_range(cells, :p)]]
+
 
     for qp in 1:getnquadpoints(cv.u)
         dΩ = getdetJdV(cv.u, qp)
-        p = function_value(cv.p, qp, a, dof_range(dh, :p))
-
-        for i in 1:nbf
-            δu = shape_value(cv, qp, i)
-            for j in 1:nbf
-                u = shape_value(cv, qp, j)
-                Mₑ[i, j]  += (u*δu)/k * dΩ
+        #for p
+        p = function_value(cv.p, qp, ae, ae_p)
+        p_old = function_value(cv.p, qp, ae_old, ae_p)
+        ṗ = (p - p_old) / Δt
+        ζ = function_gradient(cv.p, qp, ae_p)
+        #for u
+        ϵ = function_symmetric_gradient(cv.u, qp, ae, ae_u)
+        div_u = tr(ϵ)
+        div_u_old = function_divergence(cv.u, qp, ae_old, ae_u)
+        div_u̇ = (div_u - div_u_old) / Δt
+        σ = E ⊡ ϵ
+        
+        for i in nbf.u
+            δNϵi = shape_symmetric_gradient(cv.u, qp, i)
+            div_δNui = shape_divergence(cv.u, qp, i)
+            
+            for j in 1:nbf.u
+                Nϵj = shape_symmetric_gradient(cv.u, qp, j)
+                Ke_u_u[i, j]  += (δNϵi ⊡ E ⊡ Nϵj) * dΩ
             end	
+
+            for j in 1:nbf.p
+                Npj_u = shape_value(cv.p, qp, j)
+                Ke_u_p[i, j] -= (div_δNui * α * Npj_u) * dΩ
+            end
+
+            fe[i] += (δNϵi ⊡ σ - div_δNui*α*p) * dΩ
+        end
+
+        for i in nbf.p
+            δNpi = shape_value(cv.p, qp, i)
+            δNζi = shape_gradient(cv.p, qp, i)
+
+            for j in nbf.p
+                Npj_p = shape_value(cv.p, qp, j)
+                Nζi = shape_gradient(cv.p, qp, j)
+                Ke_p_p[i, j] += (β * δNpi * Npj_p/Δt + δNζi * Κ * Nζi) * dΩ
+            end
+
+            for j in nbf.u
+                div_Nuj = shape_divergence(cv.u, qp, j)
+                Ke_p_u[i, j] += (α * δNpi * div_Nuj) * dΩ
+            end
         end
     end
-    return Mₑ
+
+
 end
 
-
-################################################################
-# Assembly K
-################################################################
-
-function assemble_K(setup::FESetup)
-	(; dh, ch, sets, setups) = setup
-    K = create_sparsity_pattern(dh, ch)
-    assembler = start_assemble(K)
-    for (cellset, elementsetup) in zip(sets, setups)
-        assemble_K!(assembler, cellset, elementsetup)
-    end
-    return K
-end
-
-function assemble_K!(assembler, cellset::Set{Int}, setup::BulkElementSetup)
-    Kₑ = zeros(setup.nbf, setup.nbf)
-    for cc in CellIterator(setup.cells, cellset)
-        Ferrite.reinit!(setup.cv, cc)
-        fill!(Kₑ, 0)
-        Kₑ = assemble_Kₑ!(Kₑ, setup)
-        assemble!(assembler, celldofs(cc), Kₑ)
-    end
-    return assembler
-end
-
-function assemble_Kₑ!(Kₑ::Matrix, setup::BulkElementSetup)
-    (; cv, nbf, material) = setup
-    (; η) = material
-    for qp in 1:getnquadpoints(cv)
-        dΩ = getdetJdV(cv, qp)
-        for i in 1:nbf
-            ∇δu = shape_gradient(cv, qp, i)
-            #∇δu = shape_gradient(cv, qp, i)
-            for j in 1:nbf
-                ∇u = shape_gradient(cv, qp, j)
-                Kₑ[i, j]  += ((η ⋅ ∇u) ⋅ ∇δu) * dΩ
-            end	
-        end
-    end
-    return Kₑ
-end
-
-################################################################
-# Preparing system
-################################################################
-
-function adjust_K(K::SparseMatrixCSC, C::SparseMatrixCSC)
-    return hcat( vcat(K,C), copy(hcat(C, spzeros(1,1))') )
-end
-
-function adjust_f(f::Vector, load::LoadCase)
-    (; μ̄) = load
-    return vcat(f, [μ̄])
-end
-
-function assemble_rve_system(setup::FESetup{dim}) where {dim}
-    (; dh, ch, Load) = setup
-
-    K = assemble_K(setup)
-    C = assemble_C(setup)
-    f = zeros(ndofs(dh))
-
-    K = adjust_K(K, C)
-    f = adjust_f(f, Load)
-    apply!(K, f, ch)
-
-    return K, f
-end

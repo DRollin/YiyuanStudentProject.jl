@@ -31,8 +31,9 @@ struct LoadCase{dim}
 	μ̄::Float64
     ζ̄::Tensor{1,dim,Float64}
 end
-function LoadCase(μ̄=0.0, ζ̄₁=0.0, ζ̄₂=0.0, dim)
-	return LoadCase{dim}( μ̄, Tensor{1,dim,Float64}(( ζ̄₁, ζ̄₂, ζ̄)) )
+
+function LoadCase_pre(dim, μ̄, ζ̄1, ζ̄2, ζ̄3)
+	return LoadCase{dim}( μ̄, Tensor{1,dim,Float64}(( ζ̄1, ζ̄2, ζ̄3)) )
 end
 
 struct iso_pv_ElementSetup{dim}
@@ -53,12 +54,12 @@ struct FESetup_base{dim}
 end
 
 
-struct pv_Problem{T, TT<:AbstractTensor, Ti, dim}
-    setup::FESetup_base
-    K::Matrix{T}
-    f::Vector{T}
-    a::Vector{TT}
-    a_old::Vector{TT}
+struct pv_Problem{dim}
+    setup::FESetup_base{dim}
+    K::SparseArrays.SparseMatrixCSC{Float64, Int64}
+    f::Vector{Float64}
+    a::Vector{Float64}
+    a_old::Vector{Float64}
 end
 
 

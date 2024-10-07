@@ -4,7 +4,7 @@
 
 function generate_spheres(ϕ::Real, pdf::Uniform, domainsize::NTuple{dim,Real}) where {dim}
     if ϕ == 0
-        return BubbleBath.Sphere{2}[]
+        return BubbleBath.Sphere{dim}[]
     else
         return bubblebath(pdf, ϕ, domainsize)
     end
@@ -26,24 +26,24 @@ function get_tags_from_dimtags(v::Vector{Tuple{T,T}}) where {T<:Integer}
     return collect( t[2] for t in v )
 end
 
-function add_sphere_to_gmsh(s::BubbleBath.Sphere{2})
-    return (2, gmsh.model.occ.addDisk(s.pos..., 0.0, s.radius, s.radius))
+function add_sphere_to_gmsh(s::BubbleBath.Sphere{3})
+    return (2, gmsh.model.occ.addSphere(s.pos..., 0.0, s.radius))
 end
 
-function generate_box_grid(x₀::NTuple{2,Real}, xₑ::NTuple{2,Real}, ϕ::Real, d::Real, meshsize::Real)
+function generate_box_grid(x₀::NTuple{3,Real}, xₑ::NTuple{3,Real}, ϕ::Real, d::Real, meshsize::Real)
     dx = xₑ .- x₀
     spheres = generate_spheres(ϕ, d, dx)
     spheres = shift_by.(spheres, (x₀,))
     return generate_box_grid(x₀, xₑ, spheres, meshsize)
 end
-function generate_box_grid(x₀::NTuple{2,Real}, xₑ::NTuple{2,Real}, spheres::Vector{BubbleBath.Sphere{2}}, meshsize::Real)
-    dim = 2
+function generate_box_grid(x₀::NTuple{3,Real}, xₑ::NTuple{3,Real}, spheres::Vector{BubbleBath.Sphere{3}}, meshsize::Real)
+    dim = 3
     dx = xₑ .- x₀
     @assert all( x₀ .< xₑ ) "Lower bounds ($(x₀)) must be smaller than upper bounds ($(xₑ))!"
     nel = round.((Int,), dx ./ meshsize)
-    x = Vec{2, Float64}(x₀)
-    y = Vec{2, Float64}(xₑ)
-    grid = generate_grid(Triangle, nel , x, y)
+    x = Vec{3, Float64}(x₀)
+    y = Vec{3, Float64}(xₑ)
+    grid = generate_grid(Tetrahedron, nel , x, y)
     #round.((Int,), dx ./ meshsize)
     function check_if_in_particle(x)
         for s in spheres
@@ -60,3 +60,10 @@ function generate_box_grid(x₀::NTuple{2,Real}, xₑ::NTuple{2,Real}, spheres::
     
     return grid
 end
+
+#############################################################################
+# RVE grid
+#############################################################################
+
+generate_rve_grid(; ϕ::Real, d::Real, meshsize::Real, dx::NTuple{3,Real}=(1.0,1.0,1.0)) = generate_box_grid(-0.5 .* dx, 0.5 .* dx, ϕ, d, meshsize)
+generate_rve_grid(spheres::Vector{BubbleBath.Sphere{3}}; meshsize::Real, dx::NTuple{3,Real}=(1.0,1.0,1.0)) = generate_box_grid(-0.5 .* dx, 0.5 .* dx, spheres, meshsize)

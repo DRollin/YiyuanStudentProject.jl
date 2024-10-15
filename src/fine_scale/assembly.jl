@@ -16,14 +16,14 @@ function assemble_K_f!(assembler, cellset::Set{Int}, setup::iso_pv_ElementSetup,
     ae_old = zeros(sum(setup.nbf))
     
     for cc in CellIterator(setup.cells, cellset)
-        map!(i->a[i], ae, celldofs(cc))
-        map!(i->a_old[i], ae_old, celldofs(cc))
+        reinit!(setup.cv.u, cc)
+        reinit!(setup.cv.p, cc)
 
         fill!(Ke, 0)
         fill!(fe, 0)
 
-        reinit!(setup.cv.u, cc)
-        reinit!(setup.cv.p, cc)
+        ae .= a[celldofs(cc)]
+        ae_old .= a_old[celldofs(cc)]
 
         assemble_Ke_fe!(Ke, fe, setup, ae, ae_old, Δt)
         assemble!(assembler, celldofs(cc), Ke, fe)
@@ -40,6 +40,8 @@ function assemble_Ke_fe!(Ke::Matrix, fe::Vector, setup::iso_pv_ElementSetup, ae,
     ae_u_old = @view ae_old[dof_range(cells, :u)]
     ae_p_old = @view ae_old[dof_range(cells, :p)]
 
+    #@show ae_u
+
     fe_u = @view fe[dof_range(cells, :u)]
     fe_p = @view fe[dof_range(cells, :p)]
     Ke_u_u = @view Ke[dof_range(cells, :u), dof_range(cells, :u)]
@@ -50,13 +52,17 @@ function assemble_Ke_fe!(Ke::Matrix, fe::Vector, setup::iso_pv_ElementSetup, ae,
 
     for qp in 1:getnquadpoints(cv.u)
         dΩ = getdetJdV(cv.u, qp)
+        #@show dΩ
         #for p
         p = function_value(cv.p, qp, ae_p)
+        #@show p
         p_old = function_value(cv.p, qp, ae_p_old)
         ṗ = (p - p_old) / Δt
         ζ = function_gradient(cv.p, qp, ae_p)
+        #@show ζ
         #for u
         ϵ = function_symmetric_gradient(cv.u, qp, ae_u)
+        #@show ϵ
         div_u = tr(ϵ)
         div_u_old = function_divergence(cv.u, qp, ae_u_old)
         div_u̇ = (div_u - div_u_old) / Δt

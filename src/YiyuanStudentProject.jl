@@ -10,6 +10,7 @@ using BubbleBath
 using Distributions: Uniform
 using LaTeXStrings
 using WriteVTK
+using ForwardDiff
 
 import Makie, GeometryBasics
 

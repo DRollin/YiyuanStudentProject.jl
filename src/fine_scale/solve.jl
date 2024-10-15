@@ -15,7 +15,7 @@ function solve_load_case(problem::RVEProblem{dim}, load::LoadCase{dim};  Δt=0.0
             update!(setup.ch, t)
             apply!(a, setup.ch)
             doassemble_K_f!(pv_problem, Δt)
-            #apply_zero!(K, f, setup.ch)
+            apply_zero!(K, f, setup.ch)
 			
             Δa = -K\f
             apply_zero!(Δa, setup.ch)
@@ -32,43 +32,18 @@ function solve_load_case(problem::RVEProblem{dim}, load::LoadCase{dim};  Δt=0.0
     vtk_save(pvd);
 end;
 
-#=function solve_dns_problem(grid::Grid{dim}, materials::NamedTuple, Δt::Real; steps=0.0:10.0:1000.0) where {dim}
-	setup = prepare_dns_setup(grid, materials)
-	(; dh, ch) = setup
-	M, K, b = assemble_dns_system(setup)
-
-	A = (Δt .* K) + M
-    rhsdata = get_rhs_data(ch, A)
-    apply!(A, ch)
-
-    uₙ = zeros(ndofs(dh))
-    
-	t = 0.0
-	res = Dict{Float64, Vector}()
-	for step in steps
-		while t < step
-			t += Δt
-			update!(ch, t)
-			b .= M*uₙ
-			apply_rhs!(rhsdata, b, ch)
-			uₙ .= A\b
-		end
-		merge!(res, Dict([t => deepcopy(uₙ)]))
-	end
-    return res, setup
-end=#
-
 function solve_RVE()
     dim_rve = 3 
     #Material properties
-    G = 80e3
-    K = 160e3
-    κ = 0.05
-    α = 0.9
-    β = 1/15e3
+    G = 4.0e5
+    K = 6.67e5
+    κ = 1e-15
+    α = 0.8
+    β = 4.5e-10
 
     P = Material_pre(G, K, κ, α, β, dim_rve)
     M = Material_pre(G, K, κ, α, β, dim_rve)
+	#@show P
 
     #RVE problem setups
     Load = LoadCase_pre(dim_rve, 1.0, 1.0, 1.0, 1.0)
@@ -86,16 +61,3 @@ function solve_RVE()
 
     
 end
-
-
-#u, setup, grid, problem = solve_RVE_prepare()
-
-#Δt = 1
-
-#@time res, (grid1, dh1, ch1, cv1) = solve_macro_problem(grid, problem, Δt, steps=0.0:10.0:1000.0)
-
-#t, u = select_state(res, 5.0)
-
-#vtk_grid("Macro_potential_$t", dh1) do vtk
-#    vtk_point_data(vtk, dh1, u, "u")
-#end

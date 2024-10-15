@@ -13,9 +13,9 @@ function add_bc!(ch::ConstraintHandler, grid::Grid, load::LoadCase{3})
 end
 
 function prepare_base_setup(grid::Grid{dim}) where {dim}
-	if dim == 3
-        bshape = RefTetrahedron
-    end
+	
+    bshape = RefTetrahedron    #RefTetrahedron
+
 	setP, setM = get_phase_cell_sets(grid)
 		
 	ip  = (u = Lagrange{bshape,1}()^(dim), p = Lagrange{bshape,1}())
@@ -29,9 +29,10 @@ function prepare_base_setup(grid::Grid{dim}) where {dim}
 
 	qr  = QuadratureRule{bshape}(4)
 	cv  = (u = CellValues(qr, ip.u), p = CellValues(qr, ip.p))
+	@show cv
 	nbf = (u = getnbasefunctions(cv.u), p = getnbasefunctions(cv.p))
-	@show nbf
-	@show ndofs(dh)
+	#@show nbf
+	#@show ndofs(dh)
 
 	ch = ConstraintHandler(dh)
 	return dh, ch, cv, nbf, setP, setM

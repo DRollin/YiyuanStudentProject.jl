@@ -22,14 +22,6 @@ shift_by(sphere::BubbleBath.Sphere{dim}, shift::NTuple{dim,T}) where {dim,T} = B
 # Meshing
 #############################################################################
 
-function get_tags_from_dimtags(v::Vector{Tuple{T,T}}) where {T<:Integer}
-    return collect( t[2] for t in v )
-end
-
-function add_sphere_to_gmsh(s::BubbleBath.Sphere{3})
-    return (2, gmsh.model.occ.addSphere(s.pos..., 0.0, s.radius))
-end
-
 function generate_box_grid(x₀::NTuple{3,Real}, xₑ::NTuple{3,Real}, ϕ::Real, d::Real, meshsize::Real)
     dx = xₑ .- x₀
     spheres = generate_spheres(ϕ, d, dx)

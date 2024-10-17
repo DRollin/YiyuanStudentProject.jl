@@ -1,4 +1,8 @@
 #fine_scale
+
+"""struct iso_pv_Material
+create a material struct with the following material parameters"""
+
 struct iso_pv_Material{dim}
     E::Tensor{4,dim,Float64} #4th order elasticity modulus tensor
     Κ::Tensor{2,dim,Float64} #2nd order constant permeability tensor

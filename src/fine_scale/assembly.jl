@@ -17,7 +17,8 @@ function assemble_K_f!(assembler, cellset::Set{Int}, setup::iso_pv_ElementSetup,
     
     for cc in CellIterator(setup.cells, cellset)
         reinit!(setup.cv.u, cc)
-        reinit!(setup.cv.p, cc)
+        reinit!(setup.cv.μ, cc)
+        reinit!(setup.cv.c, cc)
 
         fill!(Ke, 0)
         fill!(fe, 0)
@@ -36,29 +37,29 @@ function assemble_Ke_fe!(Ke::Matrix, fe::Vector, setup::iso_pv_ElementSetup, ae,
     (; E, Κ, α, β) = material
 
     ae_u = @view ae[dof_range(cells, :u)]
-    ae_p = @view ae[dof_range(cells, :p)]
+    ae_p = @view ae[dof_range(cells, :μ)]
     ae_u_old = @view ae_old[dof_range(cells, :u)]
-    ae_p_old = @view ae_old[dof_range(cells, :p)]
+    ae_p_old = @view ae_old[dof_range(cells, :μ)]
 
     #@show ae_u
 
     fe_u = @view fe[dof_range(cells, :u)]
-    fe_p = @view fe[dof_range(cells, :p)]
+fe_p = @view fe[dof_range(cells, :μ)]
     Ke_u_u = @view Ke[dof_range(cells, :u), dof_range(cells, :u)]
-    Ke_u_p = @view Ke[dof_range(cells, :u), dof_range(cells, :p)]
-    Ke_p_u = @view Ke[dof_range(cells, :p), dof_range(cells, :u)]
-    Ke_p_p = @view Ke[dof_range(cells, :p), dof_range(cells, :p)]
+    Ke_u_p = @view Ke[dof_range(cells, :u), dof_range(cells, :μ)]
+    Ke_p_u = @view Ke[dof_range(cells, :μ), dof_range(cells, :u)]
+    Ke_p_p = @view Ke[dof_range(cells, :μ), dof_range(cells, :μ)]
 
 
     for qp in 1:getnquadpoints(cv.u)
         dΩ = getdetJdV(cv.u, qp)
         #@show dΩ
         #for p
-        p = function_value(cv.p, qp, ae_p)
+        p = function_value(cv.μ, qp, ae_μ)
         #@show p
-        p_old = function_value(cv.p, qp, ae_p_old)
+        p_old = function_value(cv.μ, qp, ae_μ_old)
         ṗ = (p - p_old) / Δt
-        ζ = function_gradient(cv.p, qp, ae_p)
+        ζ = function_gradient(cv.μ, qp, ae_μ)
         #@show ζ
         #for u
         ϵ = function_symmetric_gradient(cv.u, qp, ae_u)

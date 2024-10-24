@@ -6,7 +6,7 @@ DocMeta.setdocmeta!(YiyuanStudentProject, :DocTestSetup, :(using YiyuanStudentPr
 makedocs(;
     modules=[YiyuanStudentProject],
     authors="yiyuan.jiang@tu-braunschweig.de>, David Rollin <d.rollin@tu-braunschweig.de>",
-    sitename="YiyuanStudentProject.jl",
+    sitename="Chemo-mechanical.jl",
     format=Documenter.HTML(;
         canonical="https://github.com/DRollin/YiyuanStudentProject.jl.git",
         edit_link="main",
@@ -14,6 +14,19 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Mathmatical Model" => [
+            "Mathmatical Model overview" => "math_model/index.md",
+            "math_model/fine_scale.md",
+            "math_model/upscaling.md",
+            "math_model/macro_scale.md",
+        ],
+
+        "Reference" => [
+            "Reference overview" => "reference/index.md",
+            "reference/fine_scale.md",
+            "reference/upscaling.md",
+            "reference/macro_scale.md",
+        ],
 
     ],
 )
@@ -21,5 +34,5 @@ makedocs(;
 deploydocs(;
     repo="github.com/DRollin/YiyuanStudentProject.jl",
     devbranch="main",
-    #push_preview=true,
+    push_preview=false,
 )

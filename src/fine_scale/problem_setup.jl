@@ -6,9 +6,10 @@ function add_bc!(ch::ConstraintHandler, grid::Grid, load::LoadCase{3})
                collect_periodic_facets(grid, "bottom", "top"),
 			   collect_periodic_facets(grid, "front", "back") )
 
-	displacement_bc = (x, t) -> μ̄ .+ ζ̄ .* x
-	add!(ch, PeriodicDirichlet(:u, ∂Ω, displacement_bc))
-	add!(ch, PeriodicDirichlet(:p, ∂Ω, (x,t) -> 0.0))
+	
+	add!(ch, PeriodicDirichlet(:μ, ∂Ω, (x,t) -> μ̄ + ζ̄⋅x))
+	add!(ch, PeriodicDirichlet(:u, ∂Ω, [1,2,3]))
+
 	return ch
 end
 
@@ -18,21 +19,19 @@ function prepare_base_setup(grid::Grid{dim}) where {dim}
 
 	setP, setM = get_phase_cell_sets(grid)
 		
-	ip  = (u = Lagrange{bshape,1}()^(dim), p = Lagrange{bshape,1}())
+	ip  = (u = Lagrange{bshape,1}()^(dim), μ = Lagrange{bshape,1}(), c = μ = Lagrange{bshape,1}())
 
 	dh = DofHandler(grid)
 	add!(dh, :u, ip.u)
-	add!(dh, :p, ip.p)
-	#push!(dh, :u, 2, ip)
-	#push!(dh, :p, 1, ip)
+	add!(dh, :μ, ip.μ)
+	add!(dh, :c, ip.c)
+
 	close!(dh)
 
 	qr  = QuadratureRule{bshape}(4)
-	cv  = (u = CellValues(qr, ip.u), p = CellValues(qr, ip.p))
-	@show cv
-	nbf = (u = getnbasefunctions(cv.u), p = getnbasefunctions(cv.p))
-	#@show nbf
-	#@show ndofs(dh)
+	cv  = (u = CellValues(qr, ip.u), μ = CellValues(qr, ip.μ), c = CellValues(qr, ip.c))
+	nbf = (u = getnbasefunctions(cv.u), μ = getnbasefunctions(cv.μ), c = getnbasefunctions(cv.c))
+	
 
 	ch = ConstraintHandler(dh)
 	return dh, ch, cv, nbf, setP, setM

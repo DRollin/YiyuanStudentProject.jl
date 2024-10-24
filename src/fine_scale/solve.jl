@@ -37,12 +37,18 @@ function solve_RVE()
     #Material properties
     G = 4.0e5
     K = 6.67e5
-    κ = 1e-15
-    α = 0.8
-    β = 4.5e-10
+    α = 1.0
+    η = 1.0
+    μ_ref = 1.0
+    c_m = 1.0
+    θ_ref = 1.0
+    c_ref = 1.0
+    R = 8.31446261815324
+    δ(i,j) = i == j ? 1.0 : 0.0
 
-    P = Material_pre(G, K, κ, α, β, dim_rve)
-    M = Material_pre(G, K, κ, α, β, dim_rve)
+    P = Material_pre(G, K, α, R, θ_ref, c_m, c_ref, η, μ_ref, dim_rve)
+    
+    M = Material_pre(G, K, α, R, θ_ref, c_m, c_ref, η, μ_ref, dim_rve)
 	#@show P
 
     #RVE problem setups

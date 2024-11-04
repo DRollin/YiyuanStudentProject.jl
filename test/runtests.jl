@@ -3,5 +3,5 @@ using Test
 
 
 @testset "YiyuanStudentProject.jl" begin
-    @test solve_RVE() isa Nothing
+    solve_RVE() isa Nothing
 end

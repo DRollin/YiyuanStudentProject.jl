@@ -1,4 +1,4 @@
-function doassemble_K_f!(problem::pv_Problem, Δt)
+function doassemble_K_f!(problem::cm_Problem, Δt)
 	(; setup, K, f, a, a_old) = problem
     (; sets, setups) = setup
     
@@ -9,7 +9,7 @@ function doassemble_K_f!(problem::pv_Problem, Δt)
     
 end
 
-function assemble_K_f!(assembler, cellset::Set{Int}, setup::iso_pv_ElementSetup, a, a_old, Δt)
+function assemble_K_f!(assembler, cellset::Set{Int}, setup::iso_cm_ElementSetup, a, a_old, Δt)
     Ke = zeros(sum(setup.nbf), sum(setup.nbf))
     fe = zeros(sum(setup.nbf))
     ae = zeros(sum(setup.nbf))
@@ -17,7 +17,8 @@ function assemble_K_f!(assembler, cellset::Set{Int}, setup::iso_pv_ElementSetup,
     
     for cc in CellIterator(setup.cells, cellset)
         reinit!(setup.cv.u, cc)
-        reinit!(setup.cv.p, cc)
+        reinit!(setup.cv.μ, cc)
+        reinit!(setup.cv.c, cc)
 
         fill!(Ke, 0)
         fill!(fe, 0)
@@ -31,76 +32,106 @@ function assemble_K_f!(assembler, cellset::Set{Int}, setup::iso_pv_ElementSetup,
     
 end
 
-function assemble_Ke_fe!(Ke::Matrix, fe::Vector, setup::iso_pv_ElementSetup, ae, ae_old, Δt)
+function assemble_Ke_fe!(Ke::Matrix, fe::Vector, setup::iso_cm_ElementSetup, ae, ae_old, Δt)
     (; cells, cv, nbf, material) = setup
-    (; E, Κ, α, β) = material
+    (; E, α_ch, k, c_ref, M, μ_ref) = material
+
 
     ae_u = @view ae[dof_range(cells, :u)]
-    ae_p = @view ae[dof_range(cells, :p)]
+    ae_μ = @view ae[dof_range(cells, :μ)]
+    ae_c = @view ae[dof_range(cells, :c)]
+
     ae_u_old = @view ae_old[dof_range(cells, :u)]
-    ae_p_old = @view ae_old[dof_range(cells, :p)]
+    ae_μ_old = @view ae_old[dof_range(cells, :μ)]
+    ae_c_old = @view ae_old[dof_range(cells, :c)]
 
     #@show ae_u
 
     fe_u = @view fe[dof_range(cells, :u)]
-    fe_p = @view fe[dof_range(cells, :p)]
+    fe_μ = @view fe[dof_range(cells, :μ)]
+    fe_c = @view fe[dof_range(cells, :c)]
+
     Ke_u_u = @view Ke[dof_range(cells, :u), dof_range(cells, :u)]
-    Ke_u_p = @view Ke[dof_range(cells, :u), dof_range(cells, :p)]
-    Ke_p_u = @view Ke[dof_range(cells, :p), dof_range(cells, :u)]
-    Ke_p_p = @view Ke[dof_range(cells, :p), dof_range(cells, :p)]
+    Ke_u_μ = @view Ke[dof_range(cells, :u), dof_range(cells, :μ)]
+    Ke_u_c = @view Ke[dof_range(cells, :u), dof_range(cells, :c)]
 
+    Ke_μ_u = @view Ke[dof_range(cells, :μ), dof_range(cells, :u)]
+    Ke_μ_μ = @view Ke[dof_range(cells, :μ), dof_range(cells, :μ)]
+    Ke_μ_c = @view Ke[dof_range(cells, :μ), dof_range(cells, :c)]
+    
+    Ke_c_u = @view Ke[dof_range(cells, :c), dof_range(cells, :u)]
+    Ke_c_μ = @view Ke[dof_range(cells, :c), dof_range(cells, :μ)]
+    Ke_c_c = @view Ke[dof_range(cells, :c), dof_range(cells, :c)]
+    
 
+    
     for qp in 1:getnquadpoints(cv.u)
-        dΩ = getdetJdV(cv.u, qp)
-        #@show dΩ
-        #for p
-        p = function_value(cv.p, qp, ae_p)
-        #@show p
-        p_old = function_value(cv.p, qp, ae_p_old)
-        ṗ = (p - p_old) / Δt
-        ζ = function_gradient(cv.p, qp, ae_p)
-        #@show ζ
+
+        dΩ = getdetJdV(cv.c, qp)
+
+        #for c
+        c = function_value(cv.c, qp, ae_c)
+        @show c
+        c_old = function_value(cv.c, qp, ae_c_old)
+        ċ = (c - c_old) / Δt
+
+        #for μ
+        ∇μ = function_gradient(cv.μ, qp, ae_μ)
+
         #for u
         ϵ = function_symmetric_gradient(cv.u, qp, ae_u)
-        #@show ϵ
-        div_u = tr(ϵ)
-        div_u_old = function_divergence(cv.u, qp, ae_u_old)
-        div_u̇ = (div_u - div_u_old) / Δt
-        σ = E ⊡ ϵ
         
         for i in nbf.u
             δNϵi = shape_symmetric_gradient(cv.u, qp, i)
-            div_δNui = shape_divergence(cv.u, qp, i)
             
             for j in 1:nbf.u
                 Nϵj = shape_symmetric_gradient(cv.u, qp, j)
                 Ke_u_u[i, j]  += (δNϵi ⊡ E ⊡ Nϵj) * dΩ
             end	
 
-            for j in 1:nbf.p
-                Npj_u = shape_value(cv.p, qp, j)
-                Ke_u_p[i, j] -= (div_δNui * α * Npj_u) * dΩ
+            for j in 1:nbf.c
+                Ncj = shape_value(cv.c, qp, j)
+                Ke_u_c[i, j] -= (δNϵi ⊡ E ⊡ α_ch*(Ncj - c_ref)) * dΩ
             end
 
-            fe_u[i] += (δNϵi ⊡ σ - div_δNui*α*p) * dΩ
+            fe_u[i] += (δNϵi ⊡ E ⊡ ϵ - δNϵi ⊡ E ⊡ α_ch*(c - c_ref)) * dΩ
         end
 
-        for i in nbf.p
-            δNpi = shape_value(cv.p, qp, i)
-            δNζi = shape_gradient(cv.p, qp, i)
+        for i in nbf.μ
+            δNμi = shape_value(cv.μ, qp, i)
+            δN∇μi = shape_gradient(cv.μ, qp, i)
 
-            for j in nbf.p
-                Npj_p = shape_value(cv.p, qp, j)
-                Nζj = shape_gradient(cv.p, qp, j)
-                Ke_p_p[i, j] += (δNpi * β * Npj_p/Δt + δNζi ⋅ Κ ⋅ Nζj) * dΩ
+            for j in nbf.μ
+                N∇μj = shape_gradient(cv.μ, qp, j)
+                Ke_μ_μ[i, j] -= (δN∇μi ⋅ M ⋅ N∇μj) * dΩ
             end
+
+            for j in nbf.c
+                Ncj = shape_value(cv.c, qp, j)
+                Ke_μ_c[i, j] += (Ncj / Δt * δNμi) * dΩ
+            end
+
+            fe_μ[i] += (δNμi * ċ - δN∇μi ⋅ M ⋅ ∇μ) * dΩ
+        end
+
+        for i in nbf.c
+            δNci = shape_value(cv.c, qp, i)
 
             for j in nbf.u
-                div_Nuj = shape_divergence(cv.u, qp, j)
-                Ke_p_u[i, j] += (α * δNpi * div_Nuj) * dΩ
+                Nϵj = shape_symmetric_gradient(cv.u, qp, j)
+                Ke_c_u[i, j] += (α_ch ⊡ E ⊡ Nϵj) * dΩ
             end
 
-            fe_p[i] += (δNpi * (α * div_u̇ + β * ṗ) + δNζi ⋅ Κ ⋅ ζ) * dΩ
+            for j in nbf.μ
+                Nμj = shape_value(cv.μ, qp, j)
+                Ke_c_μ[i, j] += (δNci * Nμj) * dΩ
+            end
+
+            for j in nbf.c
+                Ncj = shape_value(cv.c, qp, j)
+                Ke_c_c[i, j] -= (δNci * (μ_ref + k * (Ncj - c_ref))) * dΩ
+            end
+
         end
     end
 

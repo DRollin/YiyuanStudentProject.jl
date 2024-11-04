@@ -1,11 +1,19 @@
 #fine_scale
-struct iso_pv_Material{dim}
-    E::Tensor{4,dim,Float64} #4th order elasticity modulus tensor
-    Κ::Tensor{2,dim,Float64} #2nd order constant permeability tensor
-    α::Float64 #Biot coefficient
-    β::Float64 #intrinsic compliance of the pore fluid
+
+struct iso_cm_Material{dim}
+    E::Tensor{4,dim,Float64} 
+    α_ch::Tensor{2,dim,Float64} 
+    k::Float64 
+    c_ref::Float64 
+    M::Tensor{2,dim,Float64}
+    μ_ref::Float64 
 end
 
+"""
+    elastic_stiffness(G, K)
+
+Return the elastic stiffness tensor considering the given `G` the Shear modulus and `K` the Bulk modulus
+"""
 function elastic_stiffness(G, K)
     I2 = one(SymmetricTensor{2,3})
     I4sym = symmetric(otimesu(I2,I2))
@@ -13,17 +21,50 @@ function elastic_stiffness(G, K)
     return 2*G*(I4sym-I4vol) + 3*K*I4vol
 end
 
-function Material_pre(G::Number, K::Number, κ::Number, α::Number, β::Number, dim)
-    return iso_pv_Material{dim}(elastic_stiffness(G, K), Tensor{2,dim,Float64}( (i,j) -> κ ), α, β)
+
+
+"""
+    coefficient_k(R, θ_ref, c_m)
+
+Return the concentration-chemical potantial coefficient considering the given `R` the ideal gas constant,
+ `θ_ref` the reference temperature and `c_m` the ion concentration 
+"""
+function coefficient_k(R, θ_ref, c_m)
+    return R*θ_ref/c_m
 end
+
+
+
+    
+"""
+    Material_pre(G, K, α, R, θ_ref, c_m, c_ref, η, dim)
+
+Return a `iso_cm_Material` material struct with the following material parameters:
+
+    E:      fourth order stiffness tensor E
+    α_ch:   isotropic ion intercalation tensor
+    k:      concentration-chemical potantial coefficient
+    c_ref:  reference concentration
+    M:      mobility tensor
+    
+function `elastic_stiffness` is called with the inputs `G` the Shear modulus and `K` the Bulk modulus to compute the linear elastic fourth stiffness tensor `E`
+function `coefficient_k` is called with the inputs `R` the ideal gas constant, `θ_ref` the reference temperature and `c_m` the ion concentration to compute 
+the concentration-chemical potantial coefficient `k`
+"""
+function Material_pre(G, K, α, R, θ_ref, c_m, c_ref, η, μ_ref, dim)
+    return iso_cm_Material{dim}(elastic_stiffness(G, K), Tensor{2,dim,Float64}( (i,j) -> δ(i,j)*α ), coefficient_k(R, θ_ref, c_m), c_ref, Tensor{2,dim,Float64}( (i,j) -> δ(i,j)* η), μ_ref)
+end
+
+
+
 
 struct RVEProblem{dim}
     grid::Grid{dim}
-    P::iso_pv_Material{dim}
-    M::iso_pv_Material{dim}
+    P::iso_cm_Material{dim}
+    M::iso_cm_Material{dim}
 end
 
-function RVEProblem(; grid::Grid{dim}, materials::NamedTuple{(:P,:M),Tuple{iso_pv_Material{dim}, iso_pv_Material{dim}}}) where {dim}
+function RVEProblem(; grid::Grid{dim}, materials::NamedTuple{(:P,:M),Tuple{iso_cm_Material{dim}, iso_cm_Material{dim}}}) where {dim}
     return RVEProblem{dim}(grid, materials.P, materials.M)
 end
 
@@ -36,11 +77,11 @@ function LoadCase_pre(dim, μ̄, ζ̄1, ζ̄2, ζ̄3)
 	return LoadCase{dim}( μ̄, Tensor{1,dim,Float64}(( ζ̄1, ζ̄2, ζ̄3)) )
 end
 
-struct iso_pv_ElementSetup{dim}
+struct iso_cm_ElementSetup{dim}
     cells::DofHandler
     cv::NamedTuple
     nbf::NamedTuple
-    material::iso_pv_Material{dim}
+    material::iso_cm_Material{dim}
 end
 
 
@@ -50,11 +91,11 @@ struct FESetup_base{dim}
 	ch::ConstraintHandler
     Load::LoadCase{dim}
     sets::NamedTuple{(:P,:M),Tuple{Set{Int64},Set{Int64}}}
-    setups::NamedTuple{(:P,:M),Tuple{iso_pv_ElementSetup{dim},iso_pv_ElementSetup{dim}}}
+    setups::NamedTuple{(:P,:M),Tuple{iso_cm_ElementSetup{dim},iso_cm_ElementSetup{dim}}}
 end
 
 
-struct pv_Problem{dim}
+struct cm_Problem{dim}
     setup::FESetup_base{dim}
     K::SparseArrays.SparseMatrixCSC{Float64, Int64}
     f::Vector{Float64}
@@ -62,6 +103,13 @@ struct pv_Problem{dim}
     a_old::Vector{Float64}
 end
 
+#=struct cm_Problem{dim}
+    setup::FESetup_base{dim}
+    K::SparseArrays.SparseMatrixCSC{Float64, Int64}
+    M::SparseArrays.SparseMatrixCSC{Float64, Int64}
+    a::Vector{Float64}
+    a_old::Vector{Float64}
+end=#
 
 #upscaling
 struct EffectiveResponse{dim,T}

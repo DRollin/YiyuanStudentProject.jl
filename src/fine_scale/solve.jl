@@ -2,10 +2,10 @@ function solve_load_case(problem::RVEProblem{dim}, load::LoadCase{dim};  Δt=0.0
     setup = prepare_setup(problem, load)
 	K = allocate_matrix(setup.dh, setup.ch)
     f = zeros(ndofs(setup.dh))
-    a = zeros(ndofs(setup.dh))
+    a = ones(ndofs(setup.dh))
 	a_old = copy(a)
 
-	pv_problem = pv_Problem{dim}(setup, K, f, a, a_old)
+	cm_problem = cm_Problem{dim}(setup, K, f, a, a_old)
 
 	pvd = paraview_collection("porous_media")
     step = 0
@@ -14,7 +14,9 @@ function solve_load_case(problem::RVEProblem{dim}, load::LoadCase{dim};  Δt=0.0
         if t>0
             update!(setup.ch, t)
             apply!(a, setup.ch)
-            doassemble_K_f!(pv_problem, Δt)
+            doassemble_K_f!(cm_problem, Δt)
+            @show norm(K)
+            @show norm(f)
             apply_zero!(K, f, setup.ch)
 			
             Δa = -K\f
@@ -37,12 +39,18 @@ function solve_RVE()
     #Material properties
     G = 4.0e5
     K = 6.67e5
-    κ = 1e-15
-    α = 0.8
-    β = 4.5e-10
+    α = 1.0
+    η = 1.0
+    μ_ref = 1.0
+    c_m = 1.0
+    θ_ref = 1.0
+    c_ref = 1.0
+    R = 8.31446261815324
+    δ(i,j) = i == j ? 1.0 : 0.0
 
-    P = Material_pre(G, K, κ, α, β, dim_rve)
-    M = Material_pre(G, K, κ, α, β, dim_rve)
+    P = Material_pre(G, K, α, R, θ_ref, c_m, c_ref, η, μ_ref, dim_rve)
+    
+    M = Material_pre(G, K, α, R, θ_ref, c_m, c_ref, η, μ_ref, dim_rve)
 	#@show P
 
     #RVE problem setups

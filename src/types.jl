@@ -77,7 +77,7 @@ function LoadCase_pre(dim, μ̄, ζ̄1, ζ̄2, ζ̄3)
 	return LoadCase{dim}( μ̄, Tensor{1,dim,Float64}(( ζ̄1, ζ̄2, ζ̄3)) )
 end
 
-struct iso_pv_ElementSetup{dim}
+struct iso_cm_ElementSetup{dim}
     cells::DofHandler
     cv::NamedTuple
     nbf::NamedTuple
@@ -91,11 +91,11 @@ struct FESetup_base{dim}
 	ch::ConstraintHandler
     Load::LoadCase{dim}
     sets::NamedTuple{(:P,:M),Tuple{Set{Int64},Set{Int64}}}
-    setups::NamedTuple{(:P,:M),Tuple{iso_pv_ElementSetup{dim},iso_pv_ElementSetup{dim}}}
+    setups::NamedTuple{(:P,:M),Tuple{iso_cm_ElementSetup{dim},iso_cm_ElementSetup{dim}}}
 end
 
 
-struct pv_Problem{dim}
+struct cm_Problem{dim}
     setup::FESetup_base{dim}
     K::SparseArrays.SparseMatrixCSC{Float64, Int64}
     f::Vector{Float64}
@@ -103,6 +103,13 @@ struct pv_Problem{dim}
     a_old::Vector{Float64}
 end
 
+#=struct cm_Problem{dim}
+    setup::FESetup_base{dim}
+    K::SparseArrays.SparseMatrixCSC{Float64, Int64}
+    M::SparseArrays.SparseMatrixCSC{Float64, Int64}
+    a::Vector{Float64}
+    a_old::Vector{Float64}
+end=#
 
 #upscaling
 struct EffectiveResponse{dim,T}

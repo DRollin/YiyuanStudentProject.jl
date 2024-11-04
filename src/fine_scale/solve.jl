@@ -2,10 +2,10 @@ function solve_load_case(problem::RVEProblem{dim}, load::LoadCase{dim};  Δt=0.0
     setup = prepare_setup(problem, load)
 	K = allocate_matrix(setup.dh, setup.ch)
     f = zeros(ndofs(setup.dh))
-    a = zeros(ndofs(setup.dh))
+    a = ones(ndofs(setup.dh))
 	a_old = copy(a)
 
-	pv_problem = pv_Problem{dim}(setup, K, f, a, a_old)
+	cm_problem = cm_Problem{dim}(setup, K, f, a, a_old)
 
 	pvd = paraview_collection("porous_media")
     step = 0
@@ -14,7 +14,9 @@ function solve_load_case(problem::RVEProblem{dim}, load::LoadCase{dim};  Δt=0.0
         if t>0
             update!(setup.ch, t)
             apply!(a, setup.ch)
-            doassemble_K_f!(pv_problem, Δt)
+            doassemble_K_f!(cm_problem, Δt)
+            @show norm(K)
+            @show norm(f)
             apply_zero!(K, f, setup.ch)
 			
             Δa = -K\f

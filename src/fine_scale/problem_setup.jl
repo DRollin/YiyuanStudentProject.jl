@@ -19,7 +19,7 @@ function prepare_base_setup(grid::Grid{dim}) where {dim}
 
 	setP, setM = get_phase_cell_sets(grid)
 		
-	ip  = (u = Lagrange{bshape,1}()^(dim), μ = Lagrange{bshape,1}(), c = μ = Lagrange{bshape,1}())
+	ip  = (u = Lagrange{bshape,1}()^(dim), μ = Lagrange{bshape,1}(), c = Lagrange{bshape,1}())
 
 	dh = DofHandler(grid)
 	add!(dh, :u, ip.u)
@@ -34,19 +34,20 @@ function prepare_base_setup(grid::Grid{dim}) where {dim}
 	
 
 	ch = ConstraintHandler(dh)
-	return dh, ch, cv, nbf, setP, setM
+	#Jₑ, gₑ = zeros(sum(nbf), sum(nbf)), zeros(sum(nbf))
+	return dh, ch, cv, nbf, setP, setM #, Jₑ, gₑ
 end
 	
 function prepare_setup(problem::RVEProblem{dim}, Load::LoadCase{dim}) where {dim}
     (; grid, P, M) = problem
 
-	dh, ch, cv, nbf, setP, setM = prepare_base_setup(grid)
+	dh, ch, cv, nbf, setP, setM= prepare_base_setup(grid)
 	add_bc!(ch, grid, Load)
 	close!(ch)
 	update!(ch)
 
-	setupP = iso_pv_ElementSetup{dim}(dh, cv, nbf, P)
-	setupM = iso_pv_ElementSetup{dim}(dh, cv, nbf, M)
+	setupP = iso_cm_ElementSetup{dim}(dh, cv, nbf, P)
+	setupM = iso_cm_ElementSetup{dim}(dh, cv, nbf, M)
 
 	sets   = (P=setP,   M=setM)
 	setups = (P=setupP, M=setupM)

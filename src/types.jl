@@ -34,8 +34,7 @@ function coefficient_k(R, θ_ref, c_m)
 end
 
 
-
-    
+ 
 """
     Material_pre(G, K, α, R, θ_ref, c_m, c_ref, η, dim)
 
@@ -54,8 +53,6 @@ the concentration-chemical potantial coefficient `k`
 function Material_pre(G, K, α, R, θ_ref, c_m, c_ref, η, μ_ref, dim)
     return iso_cm_Material{dim}(elastic_stiffness(G, K), Tensor{2,dim,Float64}( (i,j) -> δ(i,j)*α ), coefficient_k(R, θ_ref, c_m), c_ref, Tensor{2,dim,Float64}( (i,j) -> δ(i,j)* η), μ_ref)
 end
-
-
 
 
 struct RVEProblem{dim}

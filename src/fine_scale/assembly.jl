@@ -56,8 +56,8 @@ function assemble_Kₑ!(Kₑ::Matrix, setup::iso_cm_ElementSetup)
     Ke_u_u = @view Kₑ[dof_range(cells, :u), dof_range(cells, :u)]
     Ke_u_c = @view Kₑ[dof_range(cells, :u), dof_range(cells, :c)]
 
+    
     for qp in 1:getnquadpoints(cv.u)
-
         for i in nbf.u
             δNϵi = shape_symmetric_gradient(cv.u, qp, i)
             
@@ -70,13 +70,10 @@ function assemble_Kₑ!(Kₑ::Matrix, setup::iso_cm_ElementSetup)
                 Ncj = shape_value(cv.c, qp, j)
                 Ke_u_c[i, j] -= (δNϵi ⊡ E ⊡ α_ch*(Ncj - c_ref)) * dΩ
             end
-
         end
     end
     return Kₑ
 end
-
-
 
 ################################################################
 # Assembly M

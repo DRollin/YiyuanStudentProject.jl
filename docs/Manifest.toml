@@ -2,7 +2,7 @@
 
 julia_version = "1.10.2"
 manifest_format = "2.0"
-project_hash = "913648fadbf07f9d91e3cec8c9b2af63569ab080"
+project_hash = "cee24bf2ee875adc2e19ddf29f50359ae1c79176"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -824,6 +824,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "71e8ee0f9fe0e86a8f8c7f28361e5118eab2f93f"
 uuid = "18c40d15-f7cd-5a6d-bc92-87468d86c5db"
 version = "5.0.0+0"
+
+[[deps.Literate]]
+deps = ["Base64", "IOCapture", "JSON", "REPL"]
+git-tree-sha1 = "da046be6d63304f7ba9c1bb04820fb306ba1ab12"
+uuid = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+version = "2.20.1"
 
 [[deps.LogExpFunctions]]
 deps = ["DocStringExtensions", "IrrationalConstants", "LinearAlgebra"]

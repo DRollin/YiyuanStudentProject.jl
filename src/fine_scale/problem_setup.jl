@@ -51,5 +51,7 @@ function prepare_setup(problem::RVEProblem{dim}, Load::LoadCase{dim}) where {dim
 
 	sets   = (P=setP,   M=setM)
 	setups = (P=setupP, M=setupM)
-	return FESetup_base{dim}(grid, dh, ch, Load, sets, setups) 
+
+	J, g = allocate_matrix(dh, ch), zeros(ndofs(dh))
+	return FESetup_base{dim}(grid, dh, ch, Load, sets, setups, J, g) 
 end

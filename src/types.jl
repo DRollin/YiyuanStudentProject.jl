@@ -34,8 +34,7 @@ function coefficient_k(R, θ_ref, c_m)
 end
 
 
-
-    
+ 
 """
     Material_pre(G, K, α, R, θ_ref, c_m, c_ref, η, dim)
 
@@ -54,8 +53,6 @@ the concentration-chemical potantial coefficient `k`
 function Material_pre(G, K, α, R, θ_ref, c_m, c_ref, η, μ_ref, dim)
     return iso_cm_Material{dim}(elastic_stiffness(G, K), Tensor{2,dim,Float64}( (i,j) -> δ(i,j)*α ), coefficient_k(R, θ_ref, c_m), c_ref, Tensor{2,dim,Float64}( (i,j) -> δ(i,j)* η), μ_ref)
 end
-
-
 
 
 struct RVEProblem{dim}
@@ -92,24 +89,19 @@ struct FESetup_base{dim}
     Load::LoadCase{dim}
     sets::NamedTuple{(:P,:M),Tuple{Set{Int64},Set{Int64}}}
     setups::NamedTuple{(:P,:M),Tuple{iso_cm_ElementSetup{dim},iso_cm_ElementSetup{dim}}}
+    J:: SparseArrays.SparseMatrixCSC{Float64, Int64}
+    g:: Vector{Float64}
 end
 
 
 struct cm_Problem{dim}
     setup::FESetup_base{dim}
     K::SparseArrays.SparseMatrixCSC{Float64, Int64}
+    M::SparseArrays.SparseMatrixCSC{Float64, Int64}
     f::Vector{Float64}
     a::Vector{Float64}
     a_old::Vector{Float64}
 end
-
-#=struct cm_Problem{dim}
-    setup::FESetup_base{dim}
-    K::SparseArrays.SparseMatrixCSC{Float64, Int64}
-    M::SparseArrays.SparseMatrixCSC{Float64, Int64}
-    a::Vector{Float64}
-    a_old::Vector{Float64}
-end=#
 
 #upscaling
 struct EffectiveResponse{dim,T}

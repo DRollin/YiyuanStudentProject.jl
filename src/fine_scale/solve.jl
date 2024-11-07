@@ -1,11 +1,27 @@
+function compute_time_step!(p::cm_Problem, Δt) 
+    (; setup, K, M, aⁿ, aⁿ⁺¹) = p 
+    (; ch, g, J) = setup
+    # .nzval assures that structural zeros are NOT dropped (-> needed to apply constraints)
+
+    cⁿ = @view aⁿ[ndofs(dh.c)]
+    cⁿ⁺¹ = @view aⁿ⁺¹[ndofs(dh.c)]
+
+    g .= (M ./ Δt .- K ./ 2) * cⁿ
+    J.nzval .= (M.nzval ./ Δt + K.nzval ./ 2)
+    apply!(J, g, ch) 
+    cⁿ⁺¹ .= J \ g 
+    return p
+end
+
+
 function solve_load_case(problem::RVEProblem{dim}, load::LoadCase{dim};  Δt=0.025, t_total=1.0) where {dim}
     setup = prepare_setup(problem, load)
-	K = allocate_matrix(setup.dh, setup.ch)
-    f = zeros(ndofs(setup.dh))
-    a = ones(ndofs(setup.dh))
-	a_old = copy(a)
+	K, M, f = assemble_rve_system(setup)
+    aⁿ = zeros(ndofs(setup.dh))
+	aⁿ⁺¹ = copy(a)
 
-	cm_problem = cm_Problem{dim}(setup, K, f, a, a_old)
+	cm_problem = cm_Problem{dim}(setup, K, M, f, aⁿ, aⁿ⁺¹)
+    compute_time_step!(cm_problem, Δt) 
 
 	pvd = paraview_collection("porous_media")
     step = 0
@@ -14,7 +30,7 @@ function solve_load_case(problem::RVEProblem{dim}, load::LoadCase{dim};  Δt=0.0
         if t>0
             update!(setup.ch, t)
             apply!(a, setup.ch)
-            doassemble_K_f!(cm_problem, Δt)
+            compute_time_step!(cm_problem, Δt) 
             @show norm(K)
             @show norm(f)
             apply_zero!(K, f, setup.ch)

@@ -8,7 +8,8 @@ function add_bc!(ch::ConstraintHandler, grid::Grid, load::LoadCase{3})
 
 	
 	add!(ch, PeriodicDirichlet(:μ, ∂Ω, (x,t) -> μ̄ + ζ̄⋅x))
-	add!(ch, PeriodicDirichlet(:u, ∂Ω, [1,2,3]))
+	add!(ch, PeriodicDirichlet(:u, ∂Ω, (x,t) -> zero(Vec{3}))) #0.0, [1,2,3]))
+	#add!(ch, PeriodicDirichlet(:c, ∂Ω, (x,t) -> [1])) 
 
 	return ch
 end
@@ -28,14 +29,15 @@ function prepare_base_setup(grid::Grid{dim}) where {dim}
 
 	close!(dh)
 
-	qr  = QuadratureRule{bshape}(4)
+	
+	qr  = QuadratureRule{bshape}(5)
 	cv  = (u = CellValues(qr, ip.u), μ = CellValues(qr, ip.μ), c = CellValues(qr, ip.c))
 	nbf = (u = getnbasefunctions(cv.u), μ = getnbasefunctions(cv.μ), c = getnbasefunctions(cv.c))
+
 	
 
 	ch = ConstraintHandler(dh)
-	#Jₑ, gₑ = zeros(sum(nbf), sum(nbf)), zeros(sum(nbf))
-	return dh, ch, cv, nbf, setP, setM #, Jₑ, gₑ
+	return dh, ch, cv, nbf, setP, setM
 end
 	
 function prepare_setup(problem::RVEProblem{dim}, Load::LoadCase{dim}) where {dim}

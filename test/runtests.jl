@@ -1,7 +1,11 @@
 using YiyuanStudentProject
 using Test
 
+import Makie, GLMakie
 
+#=
 @testset "YiyuanStudentProject.jl" begin
     solve_RVE() isa Nothing
-end
+end=#
+
+solve_RVE()

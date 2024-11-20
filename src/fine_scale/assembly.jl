@@ -1,33 +1,3 @@
-function compute_element_residual!(gₑ, uₑⁿ::AbstractVector, uₑⁿ⁺¹::AbstractVector, Δt::Real, ϵ::Real, dh::DofHandler, cvΦ::CellValues, cvμ::CellValues)
-    dofsΦ, dofsμ = dof_range(dh, :Φ), dof_range(dh, :μ)
-    	# Using views work with the different parts for the fields
-	uΦⁿ   = @view uₑⁿ[dofsΦ]
-    uΦⁿ⁺¹ = @view uₑⁿ⁺¹[dofsΦ]
-    uμⁿ⁺¹ = @view uₑⁿ⁺¹[dofsμ]
-    gₑΦ = @view gₑ[dofsΦ]
-    gₑμ = @view gₑ[dofsμ]
-    
-    for qp in 1:getnquadpoints(cvΦ)
-        dΩ    = getdetJdV(cvΦ, qp)
-        Φⁿ    = function_value(cvΦ, qp, uΦⁿ)
-        Φⁿ⁺¹  = function_value(cvΦ, qp, uΦⁿ⁺¹)
-        ∇Φⁿ⁺¹ = function_gradient(cvΦ, qp, uΦⁿ⁺¹)
-        μⁿ⁺¹  = function_value(cvμ, qp, uμⁿ⁺¹)
-        ∇μⁿ⁺¹ = function_gradient(cvμ, qp, uμⁿ⁺¹)
-        for i in 1:getnbasefunctions(cvμ)
-            δμ  = shape_value(cvμ, qp, i)
-            ∇δμ = shape_gradient(cvμ, qp, i)
-            gₑμ[i] += ( δμ*(Φⁿ⁺¹-Φⁿ)/Δt + ϵ*∇δμ⋅∇μⁿ⁺¹ ) * dΩ
-        end
-        for i in 1:getnbasefunctions(cvΦ)
-            δΦ  = shape_value(cvΦ, qp, i)
-            ∇δΦ = shape_gradient(cvΦ, qp, i)
-            gₑΦ[i] += ( δΦ*μⁿ⁺¹ - ϵ*∇δΦ⋅∇Φⁿ⁺¹ - δΦ*(Φⁿ⁺¹^3 - Φⁿ⁺¹)/ϵ ) * dΩ
-        end
-    end
-    return gₑ
-end
-
 function assemble_K(setup::FESetup_base)
 	(; dh, ch, sets, setups) = setup
     K = allocate_matrix(dh, ch)
@@ -39,9 +9,11 @@ function assemble_K(setup::FESetup_base)
 end
 
 function assemble_K!(assembler, cellset::Set{Int}, setup::iso_cm_ElementSetup)
-    Kₑ = zeros(setup.nbf, setup.nbf)
-    for cc in CellIterator(setup.dh, cellset)
-        Ferrite.reinit!(setup.cv, cc)
+    Kₑ = zeros(sum(setup.nbf), sum(setup.nbf))
+    for cc in CellIterator(setup.cells, cellset)
+        Ferrite.reinit!(setup.cv.u, cc)
+        Ferrite.reinit!(setup.cv.c, cc)
+        Ferrite.reinit!(setup.cv.μ, cc)
         fill!(Kₑ, 0)
         Kₑ = assemble_Kₑ!(Kₑ, setup)
         assemble!(assembler, celldofs(cc), Kₑ)
@@ -51,14 +23,22 @@ end
 
 function assemble_Kₑ!(Kₑ::Matrix, setup::iso_cm_ElementSetup)
     (; cells, cv, nbf, material) = setup
-    (; E, α_ch, c_ref) = material
+    (; E, α_ch, k, c_ref, M, μ_ref) = material
 
     Ke_u_u = @view Kₑ[dof_range(cells, :u), dof_range(cells, :u)]
     Ke_u_c = @view Kₑ[dof_range(cells, :u), dof_range(cells, :c)]
 
+    Ke_c_u = @view Kₑ[dof_range(cells, :c), dof_range(cells, :u)]
+    Ke_c_c = @view Kₑ[dof_range(cells, :c), dof_range(cells, :c)]
+    Ke_c_μ = @view Kₑ[dof_range(cells, :c), dof_range(cells, :μ)]
+
+    Ke_μ_μ = @view Kₑ[dof_range(cells, :μ), dof_range(cells, :μ)]
+
+
     
     for qp in 1:getnquadpoints(cv.u)
-        for i in nbf.u
+        dΩ = getdetJdV(cv.u, qp)
+        for i in 1:nbf.u
             δNϵi = shape_symmetric_gradient(cv.u, qp, i)
             
             for j in 1:nbf.u
@@ -68,10 +48,39 @@ function assemble_Kₑ!(Kₑ::Matrix, setup::iso_cm_ElementSetup)
 
             for j in 1:nbf.c
                 Ncj = shape_value(cv.c, qp, j)
-                Ke_u_c[i, j] -= (δNϵi ⊡ E ⊡ α_ch*(Ncj - c_ref)) * dΩ
+                Ke_u_c[i, j] -= (δNϵi ⊡ E ⊡ (α_ch*(Ncj - c_ref))) * dΩ
+            end
+        end
+
+        for i in 1:nbf.c
+            δNci = shape_value(cv.c, qp, i)
+
+            for j in 1:nbf.u
+                Nϵj = shape_symmetric_gradient(cv.u, qp, j)
+                Ke_c_u[i, j] += (δNci * (α_ch ⊡ E ⊡ Nϵj))* dΩ
+            end
+
+            for j in 1:nbf.c
+                Ncj = shape_value(cv.c, qp, j)
+                Ke_c_c[i, j] -= (δNci * (k*(Ncj-c_ref) + α_ch ⊡ E ⊡(α_ch*(Ncj - c_ref))))* dΩ
+            end
+
+            for j in 1:nbf.μ
+                Nμj = shape_value(cv.μ, qp, j)
+                Ke_c_μ[i, j] += (δNci * (Nμj - μ_ref)) * dΩ
+            end
+        end
+
+        for i in 1:nbf.μ
+            δN∇μi = shape_gradient(cv.μ, qp, i)
+
+            for j in 1:nbf.μ
+                N∇μj = shape_gradient(cv.μ, qp, j)
+                Ke_μ_μ[i, j] += (δN∇μi ⋅ M ⋅ N∇μj) * dΩ
             end
         end
     end
+    
     return Kₑ
 end
 
@@ -90,9 +99,11 @@ function assemble_M(setup::FESetup_base)
 end
 
 function assemble_M!(assembler, cellset::Set{Int}, setup::iso_cm_ElementSetup)
-    Mₑ = zeros(setup.nbf, setup.nbf)
-    for cc in CellIterator(setup.dh, cellset)
-        Ferrite.reinit!(setup.cv, cc)
+    Mₑ = zeros(sum(setup.nbf), sum(setup.nbf))
+    for cc in CellIterator(setup.cells, cellset)
+        Ferrite.reinit!(setup.cv.u, cc)
+        Ferrite.reinit!(setup.cv.c, cc)
+        Ferrite.reinit!(setup.cv.μ, cc)
         fill!(Mₑ, 0)
         Mₑ = assemble_Mₑ!(Mₑ, setup)
         assemble!(assembler, celldofs(cc), Mₑ)
@@ -101,39 +112,22 @@ function assemble_M!(assembler, cellset::Set{Int}, setup::iso_cm_ElementSetup)
 end
 
 function assemble_Mₑ!(Mₑ::Matrix, setup::iso_cm_ElementSetup)
-    (; cv, nbf, material) = setup
-    (; E, α_ch, k, c_ref, M, μ_ref) = material
+    (; cells, cv, nbf) = setup
 
-    Me_μ_μ = @view Mₑ[dof_range(cells, :μ), dof_range(cells, :μ)]
     Me_μ_c = @view Mₑ[dof_range(cells, :μ), dof_range(cells, :c)]
 
     for qp in 1:getnquadpoints(cv.μ)
-        for i in nbf.μ
+        dΩ = getdetJdV(cv.μ, qp)
+        for i in 1:nbf.μ
             δNμi = shape_value(cv.μ, qp, i)
-            δN∇μi = shape_gradient(cv.μ, qp, i)
-
-            δNci = shape_value(cv.c, qp, i)
-
-            for j in nbf.μ
-                N∇μj = shape_gradient(cv.μ, qp, j)
-                Me_μ_μ[i, j] -= (δN∇μi ⋅ M ⋅ N∇μj) * dΩ
-            end
-
-            for j in nbf.c
+            for j in 1:nbf.c
                 Ncj = shape_value(cv.c, qp, j)
-                Nμj = shape_value(cv.μ, qp, j)
-                N∇uj = shape_gradient(cv.u, qp, j)
-                #####?????
-                δNci * Nμj .= δNci * (μ_ref + k*(Ncj-c_ref)-α_ch ⊡ E ⊡ (N∇uj - α_ch*(Ncj - c_ref)))
-                #####?????
                 Me_μ_c[i, j] += (Ncj * δNμi) * dΩ
             end
-            
-            ge = Me_μ_c
         end
     end
     
-    
+    #@show Me_μ_c
     return Mₑ
 end
 
@@ -150,11 +144,7 @@ function assemble_rve_system(setup::FESetup_base{dim}) where {dim}
 
     K = assemble_K(setup)# TODO: Do not assemble everything anew every time
     M = assemble_M(setup)
-    f = zeros(ndofs(dh))
-    
-    f = adjust_f(f, Load)
-    apply!(K, f, ch)
-    apply!(M, f, ch)
 
-    return K, M, f
+    
+    return K, M
 end

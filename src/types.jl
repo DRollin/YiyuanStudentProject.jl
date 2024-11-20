@@ -61,6 +61,19 @@ struct RVEProblem{dim}
     M::iso_cm_Material{dim}
 end
 
+"""
+    RVEProblem(; grid::Grid{dim}, materials::NamedTuple{(:P,:M),Tuple{iso_cm_Material{dim}, iso_cm_Material{dim}}})
+
+Return a `RVEProblem` basic struct for RVE solving with the following parameters:
+
+    grid:   grid 
+    P:      material parameters for particale
+    M:      material parameters for matrix
+    
+function `elastic_stiffness` is called with the inputs `G` the Shear modulus and `K` the Bulk modulus to compute the linear elastic fourth stiffness tensor `E`
+function `coefficient_k` is called with the inputs `R` the ideal gas constant, `θ_ref` the reference temperature and `c_m` the ion concentration to compute 
+the concentration-chemical potantial coefficient `k`
+"""
 function RVEProblem(; grid::Grid{dim}, materials::NamedTuple{(:P,:M),Tuple{iso_cm_Material{dim}, iso_cm_Material{dim}}}) where {dim}
     return RVEProblem{dim}(grid, materials.P, materials.M)
 end
@@ -98,9 +111,8 @@ struct cm_Problem{dim}
     setup::FESetup_base{dim}
     K::SparseArrays.SparseMatrixCSC{Float64, Int64}
     M::SparseArrays.SparseMatrixCSC{Float64, Int64}
-    f::Vector{Float64}
-    a::Vector{Float64}
-    a_old::Vector{Float64}
+    aⁿ::Vector{Float64}
+    aⁿ⁺¹::Vector{Float64}
 end
 
 #upscaling

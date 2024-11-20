@@ -12,7 +12,7 @@ using LaTeXStrings
 using WriteVTK
 using ForwardDiff
 
-import Makie, GeometryBasics
+import Makie, GLMakie, GeometryBasics
 
 #include("C:\\Users\\Yiyua\\.julia\\packages\\Gmsh\\vuFrI\\src\\Gmsh.jl")
 
@@ -25,7 +25,7 @@ include("fine_scale/problem_setup.jl")
 include("fine_scale/assembly.jl")
 include("fine_scale/solve.jl")
     
-#include("fine_scale/plotting.jl")
+include("fine_scale/plotting.jl")
 #include("fine_scale/averaging.jl")
 
 
@@ -35,7 +35,7 @@ export pre_Material, iso_pv_Material,
     plot_grid, plot_rve_grid, plot_mesh_overlay!, plot_potential, select_state,
     prepare_setup, solve_load_case, solve_RVE, 
     compute_homogenized_potential, compute_homogenized_gradient, generate_box_grid, add_sphere_to_gmsh, generate_spheres,
-    get_radius_pdf, get_tags_from_dimtags
+    get_radius_pdf, get_tags_from_dimtags, plot_grid, plot_result
 
 
     # Upscaling

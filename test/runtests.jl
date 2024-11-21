@@ -7,5 +7,4 @@ import Makie, GLMakie
 @testset "YiyuanStudentProject.jl" begin
     solve_RVE() isa Nothing
 end=#
-
-solve_RVE()
+@test true

@@ -12,7 +12,7 @@ using LaTeXStrings
 using WriteVTK
 using ForwardDiff
 
-import Makie, GLMakie, GeometryBasics
+import Makie: Makie, GeometryBasics
 
 #include("C:\\Users\\Yiyua\\.julia\\packages\\Gmsh\\vuFrI\\src\\Gmsh.jl")
 

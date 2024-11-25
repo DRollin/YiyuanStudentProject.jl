@@ -2,8 +2,8 @@
 import Literate
 
 # Tutorials
-TUTORIALS_IN = joinpath(@__DIR__, "src", "literate-tutorials")
-TUTORIALS_OUT = joinpath(@__DIR__, "src", "tutorials")
+TUTORIALS_IN = joinpath(@__DIR__, "src", "literate-documentation")
+TUTORIALS_OUT = joinpath(@__DIR__, "src", "documentation")
 mkpath(TUTORIALS_OUT)
 
 # Download some assets

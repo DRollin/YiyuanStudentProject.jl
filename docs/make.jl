@@ -3,6 +3,8 @@ using Documenter, YiyuanStudentProject
 
 DocMeta.setdocmeta!(YiyuanStudentProject, :DocTestSetup, :(using YiyuanStudentProject); recursive=true)
 
+include("generate.jl")
+
 makedocs(;
     modules=[YiyuanStudentProject],
     authors="yiyuan.jiang@tu-braunschweig.de>, David Rollin <d.rollin@tu-braunschweig.de>",
@@ -14,11 +16,11 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Mathmatical Model" => [
-            "Mathmatical Model overview" => "math_model/index.md",
-            "math_model/fine_scale.md",
-            "math_model/upscaling.md",
-            "math_model/macro_scale.md",
+        "Documentation" => [
+            "Documentation overview" => "documentation/index.md",
+            "documentation/fine_scale.md",
+            "documentation/upscaling.md",
+            "documentation/macro_scale.md",
         ],
 
         "Reference" => [
@@ -27,12 +29,11 @@ makedocs(;
             "reference/upscaling.md",
             "reference/macro_scale.md",
         ],
-
     ],
 )
 
 deploydocs(;
     repo="github.com/DRollin/YiyuanStudentProject.jl",
     devbranch="main",
-    push_preview=false,
+    push_preview=true,
 )

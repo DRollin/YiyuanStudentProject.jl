@@ -57,5 +57,8 @@ end
 # RVE grid
 #############################################################################
 
+"""
+    TODO
+"""
 generate_rve_grid(; ϕ::Real, d::Real, meshsize::Real, dx::NTuple{3,Real}=(1.0,1.0,1.0)) = generate_box_grid(-0.5 .* dx, 0.5 .* dx, ϕ, d, meshsize)
 generate_rve_grid(spheres::Vector{BubbleBath.Sphere{3}}; meshsize::Real, dx::NTuple{3,Real}=(1.0,1.0,1.0)) = generate_box_grid(-0.5 .* dx, 0.5 .* dx, spheres, meshsize)

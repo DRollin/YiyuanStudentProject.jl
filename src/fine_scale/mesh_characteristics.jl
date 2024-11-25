@@ -1,3 +1,6 @@
+"""
+    TODO
+"""
 function get_volume(nodes, ::Ferrite.Triangle)
     a = norm(nodes[1].x .- nodes[2].x)
     b = norm(nodes[1].x .- nodes[3].x)
@@ -20,7 +23,9 @@ function get_volume(grid::Grid, cellset::Set{Int})
 end
 get_volume(grid::Grid, cellset::String) = get_volume(grid, getcellset(grid, cellset))
 
-
+"""
+    TODO
+"""
 function get_phase_bias(dh::DofHandler{dim}, cv::CellValues, cellset::Set{Int}, V::Real=get_volume(grid, cellset)) where {dim}
     x̂  = zero(Tensor{1,dim})
     x̂² = zero(Tensor{2,dim})
@@ -35,11 +40,4 @@ function get_phase_bias(dh::DofHandler{dim}, cv::CellValues, cellset::Set{Int}, 
         end
     end
     return x̂/V, x̂²/V
-end
-
-function get_phase_cell_sets(grid::Grid)
-	setP  = getcellset(grid, "particles")
-	setM  = getcellset(grid, "matrix")
-	#setPM = getcellset(grid, "particle-matrix-interface")
-	return setP, setM#, setPM
 end

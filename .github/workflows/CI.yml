@@ -78,6 +78,6 @@ jobs:
         shell: julia --project=docs --color=yes {0}
         run: |
           using Documenter: DocMeta, doctest
-          using FerriteInterfaceElements
-          DocMeta.setdocmeta!(FerriteInterfaceElements, :DocTestSetup, :(using FerriteInterfaceElements); recursive=true)
-          doctest(FerriteInterfaceElements)
+          using YiyuanStudentProject
+          DocMeta.setdocmeta!(YiyuanStudentProject, :DocTestSetup, :(using YiyuanStudentProject); recursive=true)
+          doctest(YiyuanStudentProject)

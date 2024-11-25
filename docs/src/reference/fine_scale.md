@@ -2,12 +2,20 @@
 CurrentModule = YiyuanStudentProject
 ```
 
-# fine scale
-
+# Fine scale
 
 ```@docs
-elastic_stiffness
-coefficient_k
-Material_pre
-RVEProblem
+generate_rve_grid
+get_volume
+get_phase_bias
+prepare_setup
+add_bc!
+assemble_K!
+assemble_Kₑ!
+assemble_M!
+assemble_Mₑ!
+compute_time_step!
+solve_load_case
+plot_grid
+animate_result
 ```

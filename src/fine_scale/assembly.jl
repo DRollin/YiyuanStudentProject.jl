@@ -1,41 +1,37 @@
-function assemble_K(setup::FESetup_base)
-	(; dh, ch, sets, setups) = setup
-    K = allocate_matrix(dh, ch)
+# IDEA: Merge assembly of K and M into one function to save some code?
+
+"""
+    TODO
+"""
+function assemble_K!(setup::RVESetup)
+	(; phasesetups, K) = setup
     assembler = start_assemble(K)
-    for (cellset, elementsetup) in zip(sets, setups)
-        assemble_K!(assembler, cellset, elementsetup)
+    for phase in phasesetups
+        assemble_K!(assembler, phase)
     end
     return K
 end
 
-function assemble_K!(assembler, cellset::Set{Int}, setup::iso_cm_ElementSetup)
-    Kₑ = zeros(sum(setup.nbf), sum(setup.nbf))
-    for cc in CellIterator(setup.cells, cellset)
-        Ferrite.reinit!(setup.cv.u, cc)
-        Ferrite.reinit!(setup.cv.c, cc)
-        Ferrite.reinit!(setup.cv.μ, cc)
+function assemble_K!(assembler, setup::PhaseSetup)
+    (; dh, cells, cv, Kₑ) = setup
+    for cc in CellIterator(dh, cells)
+        reinit!(cv.u, cc)
+        reinit!(cv.c, cc)
+        reinit!(cv.μ, cc)
         fill!(Kₑ, 0)
-        Kₑ = assemble_Kₑ!(Kₑ, setup)
+        assemble_Kₑ!(setup)
         assemble!(assembler, celldofs(cc), Kₑ)
     end
     return assembler
 end
 
-function assemble_Kₑ!(Kₑ::Matrix, setup::iso_cm_ElementSetup)
-    (; cells, cv, nbf, material) = setup
-    (; E, α_ch, k, c_ref, M, μ_ref) = material
-
-    Ke_u_u = @view Kₑ[dof_range(cells, :u), dof_range(cells, :u)]
-    Ke_u_c = @view Kₑ[dof_range(cells, :u), dof_range(cells, :c)]
-
-    Ke_c_u = @view Kₑ[dof_range(cells, :c), dof_range(cells, :u)]
-    Ke_c_c = @view Kₑ[dof_range(cells, :c), dof_range(cells, :c)]
-    Ke_c_μ = @view Kₑ[dof_range(cells, :c), dof_range(cells, :μ)]
-
-    Ke_μ_μ = @view Kₑ[dof_range(cells, :μ), dof_range(cells, :μ)]
-
-
-    
+"""
+    TODO
+"""
+function assemble_Kₑ!(setup::PhaseSetup)
+    (; cv, nbf, material, Kₑ, submatrices) = setup
+    (; E, αᶜʰ, k, cʳᵉᶠ, M, μʳᵉᶠ) = material
+    (; Kₑuu, Kₑuc, Kₑcu, Kₑcc, Kₑcμ, Kₑμμ) = submatrices
     for qp in 1:getnquadpoints(cv.u)
         dΩ = getdetJdV(cv.u, qp)
         for i in 1:nbf.u
@@ -43,12 +39,12 @@ function assemble_Kₑ!(Kₑ::Matrix, setup::iso_cm_ElementSetup)
             
             for j in 1:nbf.u
                 Nϵj = shape_symmetric_gradient(cv.u, qp, j)
-                Ke_u_u[i, j]  += (δNϵi ⊡ E ⊡ Nϵj) * dΩ
+                Kₑuu[i, j]  += (δNϵi ⊡ E ⊡ Nϵj) * dΩ
             end	
 
             for j in 1:nbf.c
                 Ncj = shape_value(cv.c, qp, j)
-                Ke_u_c[i, j] -= (δNϵi ⊡ E ⊡ (α_ch*(Ncj - c_ref))) * dΩ
+                Kₑuc[i, j] -= (δNϵi ⊡ E ⊡ (αᶜʰ*(Ncj - cʳᵉᶠ))) * dΩ
             end
         end
 
@@ -57,17 +53,17 @@ function assemble_Kₑ!(Kₑ::Matrix, setup::iso_cm_ElementSetup)
 
             for j in 1:nbf.u
                 Nϵj = shape_symmetric_gradient(cv.u, qp, j)
-                Ke_c_u[i, j] += (δNci * (α_ch ⊡ E ⊡ Nϵj))* dΩ
+                Kₑcu[i, j] += (δNci * (αᶜʰ ⊡ E ⊡ Nϵj))* dΩ
             end
 
             for j in 1:nbf.c
                 Ncj = shape_value(cv.c, qp, j)
-                Ke_c_c[i, j] -= (δNci * (k*(Ncj-c_ref) + α_ch ⊡ E ⊡(α_ch*(Ncj - c_ref))))* dΩ
+                Kₑcc[i, j] -= (δNci * (k*(Ncj-cʳᵉᶠ) + αᶜʰ ⊡ E ⊡(αᶜʰ*(Ncj - cʳᵉᶠ))))* dΩ
             end
 
             for j in 1:nbf.μ
                 Nμj = shape_value(cv.μ, qp, j)
-                Ke_c_μ[i, j] += (δNci * (Nμj - μ_ref)) * dΩ
+                Kₑcμ[i, j] += (δNci * (Nμj - μʳᵉᶠ)) * dΩ
             end
         end
 
@@ -76,7 +72,7 @@ function assemble_Kₑ!(Kₑ::Matrix, setup::iso_cm_ElementSetup)
 
             for j in 1:nbf.μ
                 N∇μj = shape_gradient(cv.μ, qp, j)
-                Ke_μ_μ[i, j] += (δN∇μi ⋅ M ⋅ N∇μj) * dΩ
+                Kₑμμ[i, j] += (δN∇μi ⋅ M ⋅ N∇μj) * dΩ
             end
         end
     end
@@ -88,29 +84,37 @@ end
 # Assembly M
 ################################################################
 
-function assemble_M(setup::FESetup_base)
-	(; dh, ch, sets, setups) = setup
-    M = allocate_matrix(dh, ch)
+"""
+    TODO
+"""
+function assemble_M!(setup::RVESetup)
+	(; phasesetups, M) = setup
     assembler = start_assemble(M)
-    for (cellset, elementsetup) in zip(sets, setups)
-        assemble_M!(assembler, cellset, elementsetup)
+    for phase in phasesetups
+        assemble_M!(assembler, phase)
     end
     return M
 end
 
-function assemble_M!(assembler, cellset::Set{Int}, setup::iso_cm_ElementSetup)
-    Mₑ = zeros(sum(setup.nbf), sum(setup.nbf))
-    for cc in CellIterator(setup.cells, cellset)
-        Ferrite.reinit!(setup.cv.u, cc)
-        Ferrite.reinit!(setup.cv.c, cc)
-        Ferrite.reinit!(setup.cv.μ, cc)
+function assemble_M!(assembler, setup::PhaseSetup)
+    (; dh, cells, cv, Mₑ) = setup
+    for cc in CellIterator(dh, cells)
+        reinit!(cv.u, cc)
+        reinit!(cv.c, cc)
+        reinit!(cv.μ, cc)
         fill!(Mₑ, 0)
-        Mₑ = assemble_Mₑ!(Mₑ, setup)
+        assemble_Mₑ!(setup)
         assemble!(assembler, celldofs(cc), Mₑ)
     end
     return assembler
 end
 
+"""
+    TODO
+"""
+function assemble_Mₑ!(setup::PhaseSetup)
+    (; cv, nbf, Mₑ, submatrices) = setup
+    (; Mₑμc) = submatrices
 function assemble_Mₑ!(Mₑ::Matrix, setup::iso_cm_ElementSetup)
     (; cells, cv, nbf) = setup
 
@@ -119,9 +123,13 @@ function assemble_Mₑ!(Mₑ::Matrix, setup::iso_cm_ElementSetup)
     for qp in 1:getnquadpoints(cv.μ)
         dΩ = getdetJdV(cv.μ, qp)
         for i in 1:nbf.μ
+        dΩ = getdetJdV(cv.μ, qp)
+        for i in 1:nbf.μ
             δNμi = shape_value(cv.μ, qp, i)
             for j in 1:nbf.c
+            for j in 1:nbf.c
                 Ncj = shape_value(cv.c, qp, j)
+                Mₑμc[i, j] += (Ncj * δNμi) * dΩ
                 Me_μ_c[i, j] += (Ncj * δNμi) * dΩ
             end
         end

@@ -9,8 +9,11 @@ function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
                collect_periodic_facets(grid, "bottom", "top"),
 			   collect_periodic_facets(grid, "front", "back") )
 	add!(ch, PeriodicDirichlet(:μ, ∂Ω, (x,t) -> ζ̄⋅x))
-	add!(ch, PeriodicDirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x))  # TODO: why zero and not ε̄ ⋅ x ?
-	
+	add!(ch, PeriodicDirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x))
+
+	centernode =  OrderedSet{Int}([ argmin(n -> norm(n.x), grid.nodes) ])
+	add!(ch, Dirichlet(:u, centernode, (x,t) -> zero(Vec{3})))
+	add!(ch, Dirichlet(μ:, centernode, (x,t) -> μ̄))
 	return ch
 end
 

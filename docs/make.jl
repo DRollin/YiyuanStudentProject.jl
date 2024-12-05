@@ -1,3 +1,7 @@
+using TimerOutputs
+
+dto = TimerOutput()
+reset_timer!(dto)
 
 using Documenter, YiyuanStudentProject
 
@@ -23,9 +27,8 @@ makedocs(;
 
         "Reference" => [
             "Reference overview" => "reference/index.md",
+            "reference/types.md",
             "reference/fine_scale.md",
-            "reference/upscaling.md",
-            "reference/macro_scale.md",
         ],
 
     ],

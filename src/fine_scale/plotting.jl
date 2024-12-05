@@ -19,7 +19,23 @@ prepare_plotable_mesh(grid::Grid) = prepare_plotable_mesh(grid, grid.cells)
 prepare_plotable_mesh(grid::Grid{dim}, u::Vector{<:Vec{dim}}) where {dim} = prepare_plotable_mesh(grid, u, grid.cells)
 
 """
-    TODO
+    plot_grid(grid::Grid{3})
+
+Ruturn a Makie.Fifure to visualize a 3D finite element grid using the Makie plotting library.
+
+# Arguments:
+- `grid::Grid{3}`: A 3D grid object representing the finite element mesh to be visualized. 
+
+
+# Implementation Details:
+A plotable mesh is generated using `prepare_plotable_mesh` and input `grid`
+
+Sets up a 3D axis (`Axis3`) with an equal aspect ratio and a title `undeformed grid`.
+
+Renders the grid as a solid mesh (`Makie.mesh!`) with a light blue color.
+
+Overlays the grid's edges as a wireframe (`Makie.wireframe!`) with black edges.
+
 """
 function plot_grid(grid::Grid{3})
     mesh = prepare_plotable_mesh(grid)
@@ -30,11 +46,25 @@ function plot_grid(grid::Grid{3})
     return fig
 end
 
-# TODO: Idea -> have file name as input argument, so the user can decide where to save the animation
+
 """
-    TODO
+    animate_result(res::NamedTuple, setup::RVESetup{dim}, file_name::String="Myresult.mp4", n::Number)
+
+Return an animation showing the evolution of the solution for a 3D Representative Volume Element (RVE) simulation.
+
+# Arguments
+
+- `res`:         A named tuple containing the simulation results
+- `setup`:       The setup object for the RVE simulation, containing: `grid` and `dh` fields
+- `file_name`:   The path and name of the output animation file (default: `"Myresult.mp4"`)
+- `n`:           Scaling factor for displacement
+
+# Details Implementation
+A plotable mesh is generated using `prepare_plotable_mesh` with a cut open to show the inner structure.
+
+A Figure is plotted showing the results of for displacement `u`, chemical potantial `μ`, concentration`c` at each time step.
 """
-function animate_result(res::NamedTuple, setup::RVESetup{dim}) where {dim}
+function animate_result(res::NamedTuple, setup::RVESetup{dim}, file_name::String="Myresult.mp4", n::Number) where {dim}
     (; grid, dh) = setup
     # TODO: List of ideas
     # - Maybe introduce a scaling factor for the displacement?
@@ -51,7 +81,7 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}) where {dim}
 
     mesh = prepare_plotable_mesh(grid, cells)
     
-    fig = Makie.Figure()
+    fig = Makie.Figure(size = (1200, 800))
 
     t = res.t[1]
     tᵒᵇˢ = Makie.Observable(t)
@@ -65,7 +95,7 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}) where {dim}
     
     u = evaluate_at_grid_nodes(dh, res.a[1], :u)
     uᵒᵇˢ = Makie.Observable(u)
-    deformedmesh = Makie.@lift prepare_plotable_mesh(grid, $(uᵒᵇˢ), cells)
+    deformedmesh = Makie.@lift prepare_plotable_mesh(grid, ( $(uᵒᵇˢ) .* n ), cells)
     ax = Makie.Axis3(fig[2,2], aspect=:equal, title="deformed grid")
     Makie.mesh!(ax, deformedmesh; color=Makie.RGB(0.5,0.5,1.0), shading=Makie.NoShading)
     Makie.wireframe!(ax, deformedmesh; color=:black)
@@ -74,7 +104,7 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}) where {dim}
     μ = evaluate_at_grid_nodes(dh, res.a[1], :μ)
     μᵒᵇˢ = Makie.Observable(μ)
     ax = Makie.Axis3(pos[1,1], aspect=:equal, title="chemical potential")
-    colorrange = Makie.@lift (minimum( $(μᵒᵇˢ) )-1), maximum( $(μᵒᵇˢ) )
+    colorrange = (minimum(Makie.@lift (minimum( $(μᵒᵇˢ) ))), maximum(Makie.@lift (maximum( $(μᵒᵇˢ) ))))
     Makie.mesh!(ax, mesh; color=μᵒᵇˢ, colormap=:viridis, colorrange=colorrange, shading=Makie.NoShading)
     Makie.Colorbar(pos[1,2]; colormap=:viridis, colorrange=colorrange)
    
@@ -86,7 +116,7 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}) where {dim}
     Makie.mesh!(ax, mesh; color=cᵒᵇˢ, colormap=:viridis, colorrange=colorrange, shading=Makie.NoShading)
     Makie.Colorbar(pos[1,2]; colormap=:viridis, colorrange=colorrange)    
 
-	file = joinpath("Myresult.mp4")
+	file = joinpath(file_name)
     #file = joinpath(tempdir(), "Myresult.mp4")
 	anim = Makie.record(fig, file, eachindex(res.t); framerate=1) do i
         tᵒᵇˢ[] = res.t[i]

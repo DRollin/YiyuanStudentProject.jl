@@ -1,5 +1,16 @@
 """
-    TODO
+    Material{dim,T}
+
+A `Material` material type object used for defining the material character with the following parameters:
+
+- `E`:          fourth order stiffness tensor E,
+- `αᶜʰ`:        isotropic ion intercalation tensor,
+- `k`:          concentration-chemical potantial coefficient,
+- `cʳᵉᶠ`:       reference concentration,
+- `M`:          mobility tensor,
+- `μʳᵉᶠ`        reference chemical potantial.
+
+The type can be created by calling the funtion `Material{dim}(; G::T, K::T, η::T, cʳᵉᶠ::T, μʳᵉᶠ::T, θʳᵉᶠ::T, cᵐ::T, α::T, R::T=8.31446261815324) where {dim, T<:Real}`
 """
 struct Material{dim,T}
     E::Tensor{4,dim,T}
@@ -18,7 +29,14 @@ function Material{dim}(; G::T, K::T, η::T, cʳᵉᶠ::T, μʳᵉᶠ::T, θʳᵉ
 end
 
 """
-    TODO
+    RVE{dim}
+
+An object called `RVE` that contains
+- `grid`:       a Grid for the prescribed RVE,
+- `P`:          Material type for partical constraints,
+- `M`:          Material type for matrix.
+
+The type can be created by calling the funtion `RVE(; grid::Grid{dim}, materials::NamedTuple{(:P,:M),Tuple{Material{dim}, Material{dim}}}) where {dim}`
 """
 struct RVE{dim}
     grid::Grid{dim}
@@ -30,7 +48,14 @@ function RVE(; grid::Grid{dim}, materials::NamedTuple{(:P,:M),Tuple{Material{dim
 end
 
 """
-    TODO
+    LoadCase{dim}
+
+A `LoadCase` type object that defined the external forces
+- `ε̄`:          averaging external strain Tensor,
+- `μ̄`:          averaging chemical potantial on the boundary,
+- `ζ̄`          gradient of the averaging chemical potantial on the boundary.
+
+The struct can be created by calling the funtion `LoadCase(dim::Int; kwargs...)
 """
 struct LoadCase{dim}
     ε̄::SymmetricTensor{2,dim,Float64}
@@ -61,7 +86,17 @@ function LoadCase(::Val{3}; ε̄₁₁::T=0.0, ε̄₁₂::T=0.0, ε̄₁₃::T=
 end
 
 """
-    TODO
+    PhaseSetup{dim}
+
+A `PhaseSetup` type object that contains the relevant imformations for the element assembly:
+- `dh`:             dofHandler based on the given grid,
+- `cells`:          ordered cell sets,
+- `cv`:             cellvalues in named tuple for each unknown field representivly,
+- `nbf`:            number of base function in named tuple for the unknown fields representivly,
+- `material`:       material struct,
+- `Kₑ`:             element stiffness matrix,
+- `Mₑ`:             element mass matrix,
+- `submatrices`:    submatrices for locating the unknown fields for element matrix assembly.
 """
 struct PhaseSetup{dim}
     dh::DofHandler
@@ -75,7 +110,18 @@ struct PhaseSetup{dim}
 end
 
 """
-    TODO
+    RVESetup{dim}
+
+A `PhaseSetup` object that contains the relevant imformations for the problem solving/time stepping:
+- `grid`:           a Grid for the prescribed RVE,
+- `dh`:             dofHandler based on the given grid,
+- `phasesetups`:    struct PhaseSetup in named tuple for each unknown field representivly,
+- `K`:              stiffness matrix
+- `M`:              mass matrix
+- `J`:              jacobian matrix for time stepping
+- `g`:              residual vector for time stepping
+- `aⁿ`:              unknowns in current step
+- `aⁿ⁺¹`:           unknowns in next step
 """
 struct RVESetup{dim}
 	grid::Grid{dim}

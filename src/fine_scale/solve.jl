@@ -1,5 +1,28 @@
 """
-    TODO
+    compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) 
+
+Compute the solution for the next time step in a Representative Volume Element (RVE) simulation using an implicit time integration scheme.
+
+# Arguments
+- `setup::RVESetup{dim}`:   The setup object containing parameters for the RVE simulation:
+  - `grid`:                 The finite element grid,
+  - `dh`:                   The degrees of freedom handler,
+  - `K`:                    The gloable stiffness matrix,
+  - `M`:                    The gloable mass matrix,
+  - `g`:                    The residual vector (force vector),
+  - `J`:                    The Jacobian matrix (system matrix),
+  - `aⁿ`:                   The solution vector at the current time step,
+  - `aⁿ⁺¹`:                 The solution vector at the next time step,
+- `load::LoadCase{dim}`:    The load case specifying boundary conditions and external loads for the current time step.
+- `Δt::Real`:               The time step size.
+
+
+# Implementation Details
+This function uses an implicit time integration scheme to compute the solution for the next time step by solving the linear system:
+
+The function applies boundary conditions to the system matrix and force vector using a constraint handler before solving 
+for the next time step solutions
+
 """
 function compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) where{dim}
     (; grid, dh, K, M, g, J, aⁿ, aⁿ⁺¹) = setup
@@ -7,22 +30,30 @@ function compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) wher
 	add_bc!(ch, grid, load)
 	close!(ch)
         # .nzval assures that structural zeros are NOT dropped (-> needed to apply constraints)
-    g .= (M .- K .* Δt ./ 2) * aⁿ # TODO: I changed the sign of K!!!
+    g .= (M .- K .* Δt ./ 2) * aⁿ 
     J.nzval .= (M.nzval .+ K.nzval .* Δt ./ 2)
     apply!(J, g, ch) 
     aⁿ⁺¹ .= J \ g 
     return setup
 end
 
-# TODO: Maybe better solve_time_series ?
+
 """
-    TODO
+    solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.25, t_total=1) where {dim}
+
+Compute the results in a named tuple with fields `t` total time cost and `a` solution vector contains `u` displacement, `μ` chemical potantial, 
+and `c` concentration for the whole time series with a certain time step. 
+
+# Arguments
+- `rve`:    Object for solving function `prepare_setup`,
+- `load`:   Object `LoadCase` with a 
+
 """
-function solve_load_case(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.25, t_total=1) where {dim}
+function solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.25, t_total=1) where {dim}
     setup = prepare_setup(rve)
     (; aⁿ, aⁿ⁺¹) = setup
-    assemble_K!(setup)
-    assemble_M!(setup)
+    assemble!(setup)
+    
 
     nsteps = ceil(Int, t_total/Δt)
 	res = (t = Vector{Float64}(undef, nsteps+1),

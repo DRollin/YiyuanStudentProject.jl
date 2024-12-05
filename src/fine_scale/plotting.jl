@@ -64,7 +64,7 @@ A plotable mesh is generated using `prepare_plotable_mesh` with a cut open to sh
 
 A Figure is plotted showing the results of for displacement `u`, chemical potantial `μ`, concentration`c` at each time step.
 """
-function animate_result(res::NamedTuple, setup::RVESetup{dim}, file_name::String="Myresult.mp4", n::Number) where {dim}
+function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name::String="Myresult.mp4", n::Real=1.0) where {dim}
     (; grid, dh) = setup
     # TODO: List of ideas
     # - Maybe introduce a scaling factor for the displacement?

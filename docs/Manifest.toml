@@ -1746,7 +1746,7 @@ uuid = "c5fb5394-a638-5e4d-96e5-b29de1b5cf10"
 version = "1.5.0+0"
 
 [[deps.YiyuanStudentProject]]
-deps = ["BubbleBath", "Distributions", "Ferrite", "FerriteGmsh", "ForwardDiff", "GLMakie", "GeometryBasics", "LaTeXStrings", "Makie", "OrderedCollections", "Reexport", "SparseArrays", "WriteVTK"]
+deps = ["BubbleBath", "Distributions", "Ferrite", "FerriteGmsh", "ForwardDiff", "GeometryBasics", "LaTeXStrings", "Makie", "Reexport", "SparseArrays", "WriteVTK"]
 path = ".."
 uuid = "6e5375a4-7f41-4b01-bc97-6182ed31c037"
 version = "1.0.0-DEV"

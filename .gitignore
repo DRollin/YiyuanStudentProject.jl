@@ -1,2 +1,9 @@
 /Manifest.toml
 docs/build/
+docs/src/math_model/upscaling.md
+docs/src/math_model/macro_scale.md
+docs/src/math_model/index.md
+docs/src/math_model/fine_scale.md
+docs/src/documentation/index.md
+docs/src/reference/fine_scale.md
+

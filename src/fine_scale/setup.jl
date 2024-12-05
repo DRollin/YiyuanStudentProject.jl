@@ -1,5 +1,7 @@
 """
-    TODO
+    add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
+
+Create a periodic boundary condition on `u` and `μ` unknown fields respectively on the `∂Ω` part of the boundary. `∂Ω` is defined by the collection of periodic facets from the `grid`. 
 """
 function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 	(; ε̄, μ̄, ζ̄) = load
@@ -7,8 +9,11 @@ function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
                collect_periodic_facets(grid, "bottom", "top"),
 			   collect_periodic_facets(grid, "front", "back") )
 	add!(ch, PeriodicDirichlet(:μ, ∂Ω, (x,t) -> ζ̄⋅x))
-	add!(ch, PeriodicDirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x)) #0.0, [1,2,3])) # TODO: why zero and not ε̄ ⋅ x ?
-	#add!(ch, PeriodicDirichlet(:c, ∂Ω, (x,t) -> [1])) 
+	add!(ch, PeriodicDirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x))
+
+	centernode =  OrderedSet{Int}([ argmin(n -> norm(n.x), grid.nodes) ])
+	add!(ch, Dirichlet(:u, centernode, (x,t) -> zero(Vec{3})))
+	add!(ch, Dirichlet(μ:, centernode, (x,t) -> μ̄))
 	return ch
 end
 
@@ -17,7 +22,36 @@ _get_ref_shape(::Val{2}) = RefTriangle
 _get_ref_shape(::Val{3}) = RefTetrahedron
 
 """
-    TODO
+    prepare_setup(rve::RVE{dim}) where {dim}
+
+Return a `RVESetup` struct for the elementweise assembly and time stepping. 
+	
+# Arguments:
+-`rve::RVE{dim}`: An `RVE` object containing the following fields:
+
+- `grid`: 		The grid (mesh) for RVE.
+- `P`: 			Phase data for "particles" in the material.
+- `M`: 			Phase data for the "matrix" in the material.
+
+# Implementation Details:
+The interpolation `ip` is defined by passing the corresponding `refshape` using the function `_get_ref_shape(Val(dim))`. 
+
+After the 'DofHandler' is created based on the `grid` from the argument `rve`, unknown fields can be added to it using `add!`
+By calling `close!` to finalize the construction. 
+
+Cellvallues are created for each discrete fields respectively passing quadrature rule with 3 integration points.
+
+Number of base function for each unknown fields is defined using `getnbasefunctions`.
+
+Calling function `add_bc!` to initialize the boundary conditions and associate this to the dofhandler.
+
+Local stiffness and mass matrices are initialized. Submatrices for locating the corresponding field interaction in elementweise by calling the macro `@view`.
+
+A named tuple with the Struct `PhaseSetup` is then prepared for each `P` stands for particals and `M` for matrix.
+
+Gloable stiffness, mass, and jacobian matrices is initialized using `allocate_matrix` for a sparse matrix pattern.
+
+initialize the gloable residual vector and the solution vectors for both current and next time step.
 """
 function prepare_setup(rve::RVE{dim}) where {dim}
     (; grid, P, M) = rve

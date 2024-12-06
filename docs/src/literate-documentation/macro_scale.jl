@@ -1,1 +1,0 @@
-# # [Chemo-Mechanical Problem - macro scale](@id documentation-macro-scale)

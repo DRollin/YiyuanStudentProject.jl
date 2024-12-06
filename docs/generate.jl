@@ -2,15 +2,15 @@
 import Literate
 
 # Tutorials
-TUTORIALS_IN = joinpath(@__DIR__, "src", "literate-documentation")
-TUTORIALS_OUT = joinpath(@__DIR__, "src", "documentation")
-mkpath(TUTORIALS_OUT)
+EXAMPLES_IN = joinpath(@__DIR__, "src", "literate-examples")
+EXAMPLES_OUT = joinpath(@__DIR__, "src", "examples")
+mkpath(EXAMPLES_OUT)
 
 # Download some assets
 include("download_resources.jl")
 
 # Run Literate on all examples
-@timeit dto "Literate." for (IN, OUT) in [(TUTORIALS_IN, TUTORIALS_OUT)], program in readdir(IN; join=true)
+@timeit dto "Literate." for (IN, OUT) in [(EXAMPLES_IN, EXAMPLES_OUT)], program in readdir(IN; join=true)
     name = basename(program)
     if endswith(program, ".jl")
         script = @timeit dto "script()" @timeit dto name Literate.script(program, OUT)
@@ -43,7 +43,7 @@ include("download_resources.jl")
 end
 
 # remove any .vtu files in the generated dir (should not be deployed)
-@timeit dto "remove vtk files" for dir in [TUTORIALS_OUT]
+@timeit dto "remove vtk files" for dir in [EXAMPLES_OUT]
     cd(dir) do
         foreach(file -> endswith(file, ".vtu") && rm(file), readdir())
         foreach(file -> endswith(file, ".pvd") && rm(file), readdir())

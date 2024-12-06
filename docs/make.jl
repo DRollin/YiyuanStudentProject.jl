@@ -20,12 +20,12 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Documentation" => [
+        #"Documentation" => [
             "Documentation overview" => "documentation/index.md",
             "documentation/fine_scale.md",
             "documentation/upscaling.md",
             "documentation/macro_scale.md",
-        ],
+        #],
 
         "Reference" => [
             "Reference overview" => "reference/index.md",

@@ -15,6 +15,7 @@ function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 
 	centernode = OrderedSet{Int}([centernode_idx])
 
+	centernode =  OrderedSet{Int}([ argmin(n -> norm(n.x), grid.nodes) ])
 	add!(ch, Dirichlet(:u, centernode, (x,t) -> zero(Vec{3})))
 	add!(ch, Dirichlet(:μ, centernode, (x,t) -> μ̄))
 	return ch

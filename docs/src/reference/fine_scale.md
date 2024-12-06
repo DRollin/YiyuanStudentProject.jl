@@ -10,12 +10,10 @@ get_volume
 get_phase_bias
 prepare_setup
 add_bc!
-assemble_K!
-assemble_Kₑ!
-assemble_M!
-assemble_Mₑ!
+assemble!
+assemble_element!
 compute_time_step!
-solve_load_case
+solve_time_series
 plot_grid
 animate_result
 ```

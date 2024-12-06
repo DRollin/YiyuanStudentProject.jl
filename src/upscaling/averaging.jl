@@ -1,4 +1,4 @@
-function average_quantities(uₛₒₗ::Vector, setup::PhaseSetup)
+function average_quantities(aₛₒₗ::Vector, setup::PhaseSetup)
     (; dh, cells, cv, material) = setup
     (; E, αᶜʰ, k, cʳᵉᶠ, M, μʳᵉᶠ) = material
 

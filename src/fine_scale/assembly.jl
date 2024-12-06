@@ -1,7 +1,7 @@
 # IDEA: Merge assembly of K and M into one function to save some code?
 
 """
-        assemble!(setup::RVESetup)
+        assemble_K_M!(setup::RVESetup)
 
 Return the assembled mass matrix `M` and stiffness matrix `K`.
 
@@ -20,18 +20,18 @@ Do the whole assembly for all the phases:
     return assembled `Kₑ` and `Mₑ`.
 
 """
-function assemble!(setup::RVESetup)
+function assemble_K_M!(setup::RVESetup)
 	(; phasesetups, K, M) = setup
     assembler_K = start_assemble(K)
     assembler_M = start_assemble(M)
     for phase in phasesetups
-        assemble!(assembler_K, assembler_M, phase)
+        assemble_K_M!(assembler_K, assembler_M, phase)
     end
     return K, M
 end
 
-function assemble!(assembler_K, assembler_M, setup::PhaseSetup)
-    (; dh, cells, cv, Kₑ) = setup
+function assemble_K_M!(assembler_K, assembler_M, setup::PhaseSetup)
+    (; dh, cells, cv, Kₑ, Mₑ) = setup
     for cc in CellIterator(dh, cells)
         reinit!(cv.u, cc)
         reinit!(cv.c, cc)

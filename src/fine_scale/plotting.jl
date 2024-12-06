@@ -47,24 +47,24 @@ function plot_grid(grid::Grid{3})
 end
 
 
-"""
+#="""
     animate_result(res::NamedTuple, setup::RVESetup{dim}, file_name::String="Myresult.mp4", n::Number)
 
 Return an animation showing the evolution of the solution for a 3D Representative Volume Element (RVE) simulation.
 
-# Arguments
-
+# Arguments:
 - `res`:         A named tuple containing the simulation results
 - `setup`:       The setup object for the RVE simulation, containing: `grid` and `dh` fields
 - `file_name`:   The path and name of the output animation file (default: `"Myresult.mp4"`)
 - `n`:           Scaling factor for displacement
 
-# Details Implementation
+# Details Implementation:
 A plotable mesh is generated using `prepare_plotable_mesh` with a cut open to show the inner structure.
 
 A Figure is plotted showing the results of for displacement `u`, chemical potantial `μ`, concentration`c` at each time step.
-"""
-function animate_result(res::NamedTuple, setup::RVESetup{dim}, file_name::String="Myresult.mp4", n::Number) where {dim}
+    
+"""=#
+function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myresult.mp4", n=1.0) where {dim}
     (; grid, dh) = setup
     # TODO: List of ideas
     # - Maybe introduce a scaling factor for the displacement?
@@ -104,7 +104,7 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}, file_name::String
     μ = evaluate_at_grid_nodes(dh, res.a[1], :μ)
     μᵒᵇˢ = Makie.Observable(μ)
     ax = Makie.Axis3(pos[1,1], aspect=:equal, title="chemical potential")
-    colorrange = (minimum(Makie.@lift (minimum( $(μᵒᵇˢ) ))), maximum(Makie.@lift (maximum( $(μᵒᵇˢ) ))))
+    colorrange = Makie.@lift ((minimum( $(μᵒᵇˢ))-1) , maximum( $(μᵒᵇˢ) ))
     Makie.mesh!(ax, mesh; color=μᵒᵇˢ, colormap=:viridis, colorrange=colorrange, shading=Makie.NoShading)
     Makie.Colorbar(pos[1,2]; colormap=:viridis, colorrange=colorrange)
    

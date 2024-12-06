@@ -11,9 +11,12 @@ function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 	add!(ch, PeriodicDirichlet(:μ, ∂Ω, (x,t) -> ζ̄⋅x))
 	add!(ch, PeriodicDirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x))
 
-	centernode =  OrderedSet{Int}([ argmin(n -> norm(n.x), grid.nodes) ])
+	centernode_idx = argmin((idx_node) -> norm(idx_node[2].x), enumerate(grid.nodes))[1]
+
+	centernode = OrderedSet{Int}([centernode_idx])
+
 	add!(ch, Dirichlet(:u, centernode, (x,t) -> zero(Vec{3})))
-	add!(ch, Dirichlet(μ:, centernode, (x,t) -> μ̄))
+	add!(ch, Dirichlet(:μ, centernode, (x,t) -> μ̄))
 	return ch
 end
 
@@ -55,6 +58,7 @@ initialize the gloable residual vector and the solution vectors for both current
 """
 function prepare_setup(rve::RVE{dim}) where {dim}
     (; grid, P, M) = rve
+
 	
 	refshape   = _get_ref_shape(Val(dim))
 	setP, setM = getcellset(grid, "particles"), getcellset(grid, "matrix")
@@ -113,6 +117,13 @@ function prepare_setup(rve::RVE{dim}) where {dim}
 	g    = zeros(ndofs(dh))
 	aⁿ   = zeros(ndofs(dh))
     aⁿ⁺¹ = zeros(ndofs(dh))
+
+	
+	apply_analytical!(aⁿ, dh, :c, (x -> 1.0), setP)
+	apply_analytical!(aⁿ, dh, :c, (x -> 1.0), setM)
+	apply_analytical!(aⁿ, dh, :μ, (x -> 1.0), setP)
+	apply_analytical!(aⁿ, dh, :μ, (x -> 1.0), setM)
+	
 
 	return RVESetup{dim}(grid, dh, setups, K, M, J, g, aⁿ, aⁿ⁺¹) 
 end

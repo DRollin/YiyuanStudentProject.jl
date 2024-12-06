@@ -52,7 +52,7 @@ and `c` concentration for the whole time series with a certain time step.
 function solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.25, t_total=1) where {dim}
     setup = prepare_setup(rve)
     (; aⁿ, aⁿ⁺¹) = setup
-    assemble!(setup)
+    assemble_K_M!(setup)
     
 
     nsteps = ceil(Int, t_total/Δt)

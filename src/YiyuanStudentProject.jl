@@ -37,10 +37,13 @@ export generate_rve_spheres, generate_rve_grid
 include("fine_scale/mesh_characteristics.jl")
 
 include("fine_scale/setup.jl")
+
 include("fine_scale/assembly.jl")
+
 include("fine_scale/solve.jl")
-    
+export compute_time_step!, solve_time_series
 include("fine_scale/plotting.jl")
+export animate_result
 #include("fine_scale/averaging.jl")
 
 

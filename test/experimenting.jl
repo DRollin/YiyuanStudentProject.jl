@@ -3,9 +3,9 @@ import GLMakie
 
 dim = 3
 
-P = Material{dim}(; G=4.0e5, K=6.67e5, η=1.0, cʳᵉᶠ=1.0, μʳᵉᶠ=1.0, θʳᵉᶠ=1.0, cᵐ=1.0, α=1.0)
-M = Material{dim}(; G=4.0e5, K=6.67e5, η=1.0, cʳᵉᶠ=1.0, μʳᵉᶠ=1.0, θʳᵉᶠ=1.0, cᵐ=1.0, α=1.0)
-load = LoadCase(dim; ζ̄₁=1.0)
+P = Material{dim}(; G=4.0e5, K=6.67e5, η=1.0, cʳᵉᶠ=1.0, μʳᵉᶠ=1.0, θʳᵉᶠ=1.0, cᵐ=1.0, α=0.1)
+M = Material{dim}(; G=4.0e5, K=6.67e5, η=1.0, cʳᵉᶠ=1.0, μʳᵉᶠ=1.0, θʳᵉᶠ=1.0, cᵐ=1.0, α=0.1)
+load = LoadCase(dim; ε̄₁₁ = 1.0, μ̄ = 1.0, ζ̄₁=1.0)
 
 d = 0.1 
 ϕ = 0.1 #packing fraction
@@ -13,8 +13,8 @@ meshsize = 0.1
 grid = generate_rve_grid(; ϕ=ϕ, d=d, meshsize=meshsize, dx=(1.0,1.0, 1.0))
 rve = RVE(grid, P, M)
 
-res, setup = solve_load_case(rve, load)
+res, setup = solve_time_series(rve, load)
 
-plot_grid(grid)
+#plot_grid(grid)
 
-file, fig, anim = animate_result(res, setup)
+file, fig, anim = animate_result(res, setup, file_name="Myresult.mp4", n=1.0)

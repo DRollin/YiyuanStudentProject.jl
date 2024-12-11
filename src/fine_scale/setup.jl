@@ -15,7 +15,7 @@ function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 
 	centernode = OrderedSet{Int}([centernode_idx])
 
-	centernode =  OrderedSet{Int}([ argmin(n -> norm(n.x), grid.nodes) ])
+	#centernode =  OrderedSet{Int}([ argmin(n -> norm(n.x), grid.nodes) ])
 	add!(ch, Dirichlet(:u, centernode, (x,t) -> zero(Vec{3})))
 	add!(ch, Dirichlet(:μ, centernode, (x,t) -> μ̄))
 	return ch
@@ -59,6 +59,9 @@ initialize the gloable residual vector and the solution vectors for both current
 """
 function prepare_setup(rve::RVE{dim}) where {dim}
     (; grid, P, M) = rve
+	
+	P_material = P
+	M_material = M
 
 	
 	refshape   = _get_ref_shape(Val(dim))
@@ -120,10 +123,10 @@ function prepare_setup(rve::RVE{dim}) where {dim}
     aⁿ⁺¹ = zeros(ndofs(dh))
 
 	
-	apply_analytical!(aⁿ, dh, :c, (x -> 1.0), setP)
-	apply_analytical!(aⁿ, dh, :c, (x -> 1.0), setM)
-	apply_analytical!(aⁿ, dh, :μ, (x -> 1.0), setP)
-	apply_analytical!(aⁿ, dh, :μ, (x -> 1.0), setM)
+	apply_analytical!(aⁿ, dh, :c, (x -> P_material.cʳᵉᶠ), setP)
+	apply_analytical!(aⁿ, dh, :c, (x -> M_material.cʳᵉᶠ), setM)
+	apply_analytical!(aⁿ, dh, :μ, (x -> P_material.μʳᵉᶠ), setP)
+	apply_analytical!(aⁿ, dh, :μ, (x -> M_material.μʳᵉᶠ), setM)
 	
 
 	return RVESetup{dim}(grid, dh, setups, K, M, J, g, aⁿ, aⁿ⁺¹) 

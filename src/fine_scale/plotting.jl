@@ -47,7 +47,7 @@ function plot_grid(grid::Grid{3})
 end
 
 
-#="""
+"""
     animate_result(res::NamedTuple, setup::RVESetup{dim}, file_name::String="Myresult.mp4", n::Number)
 
 Return an animation showing the evolution of the solution for a 3D Representative Volume Element (RVE) simulation.
@@ -63,7 +63,7 @@ A plotable mesh is generated using `prepare_plotable_mesh` with a cut open to sh
 
 A Figure is plotted showing the results of for displacement `u`, chemical potantial `μ`, concentration`c` at each time step.
     
-"""=#
+"""
 function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myresult.mp4", n=1.0) where {dim}
     (; grid, dh) = setup
     # TODO: List of ideas
@@ -71,6 +71,14 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myres
     # - Find a better (larger) size for the Figure
     # - Find initial color ranges which are adapted to the applied loading or the overall max/min?
     # - Improve ticks if necessary to match RVE bounds
+
+    
+    μ_all = [evaluate_at_grid_nodes(dh, res.a[i], :μ) for i in eachindex(res.t)]
+    c_all = [evaluate_at_grid_nodes(dh, res.a[i], :c) for i in eachindex(res.t)]
+ 
+    μ_min, μ_max = minimum(μ -> minimum(μ), μ_all), maximum(μ -> maximum(μ), μ_all)
+    c_min, c_max = minimum(c -> minimum(c), c_all), maximum(c -> maximum(c), c_all)
+     
     addcellset!(grid, "sliced open X", x -> x[1] ≥ 0)
     addcellset!(grid, "sliced open Y", x -> x[2] ≥ 0)
     addcellset!(grid, "sliced open Z", x -> x[3] ≤ 0)
@@ -81,7 +89,8 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myres
 
     mesh = prepare_plotable_mesh(grid, cells)
     
-    fig = Makie.Figure(size = (1200, 800))
+    fig = Makie.Figure(size=(1200,800))
+
 
     t = res.t[1]
     tᵒᵇˢ = Makie.Observable(t)
@@ -104,7 +113,7 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myres
     μ = evaluate_at_grid_nodes(dh, res.a[1], :μ)
     μᵒᵇˢ = Makie.Observable(μ)
     ax = Makie.Axis3(pos[1,1], aspect=:equal, title="chemical potential")
-    colorrange = Makie.@lift ((minimum( $(μᵒᵇˢ))-1) , maximum( $(μᵒᵇˢ) ))
+    colorrange = (μ_min, μ_max)
     Makie.mesh!(ax, mesh; color=μᵒᵇˢ, colormap=:viridis, colorrange=colorrange, shading=Makie.NoShading)
     Makie.Colorbar(pos[1,2]; colormap=:viridis, colorrange=colorrange)
    
@@ -112,7 +121,7 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myres
     c = evaluate_at_grid_nodes(dh, res.a[1], :c)
     cᵒᵇˢ = Makie.Observable(c)
     ax = Makie.Axis3(pos[1,1], aspect=:equal, title="concentration")
-    colorrange = Makie.@lift (minimum( $(cᵒᵇˢ) )-1), maximum( $(cᵒᵇˢ) )
+    colorrange = (c_min, c_max)
     Makie.mesh!(ax, mesh; color=cᵒᵇˢ, colormap=:viridis, colorrange=colorrange, shading=Makie.NoShading)
     Makie.Colorbar(pos[1,2]; colormap=:viridis, colorrange=colorrange)    
 

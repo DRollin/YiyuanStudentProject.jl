@@ -10,7 +10,7 @@ Compute the solution for the next time step in a Representative Volume Element (
   - `K`:                    The gloable stiffness matrix,
   - `M`:                    The gloable mass matrix,
   - `g`:                    The residual vector (force vector),
-  - `J`:                    The Jacobian matrix (system matrix),
+  - `J`:                    The jacobian matrix (system matrix),
   - `aⁿ`:                   The solution vector at the current time step,
   - `aⁿ⁺¹`:                 The solution vector at the next time step,
 - `load::LoadCase{dim}`:    The load case specifying boundary conditions and external loads for the current time step.
@@ -18,7 +18,8 @@ Compute the solution for the next time step in a Representative Volume Element (
 
 
 # Implementation Details
-This function uses an implicit time integration scheme to compute the solution for the next time step by solving the linear system:
+This function uses Crank-Nicolson Method to compute the solution in an implicit time stepping scheme for solving 
+the linear system in the next time step:
 
 The function applies boundary conditions to the system matrix and force vector using a constraint handler before solving 
 for the next time step solutions
@@ -34,7 +35,7 @@ function compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) wher
     J.nzval .= (M.nzval .+ K.nzval .* Δt ./ 2)
     apply!(J, g, ch) 
     aⁿ⁺¹ .= J \ g 
-    return setup
+    return setup, aⁿ⁺¹
 end
 
 
@@ -49,7 +50,7 @@ and `c` concentration for the whole time series with a certain time step.
 - `load`:   Object `LoadCase` with a 
 
 """
-function solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.25, t_total=1) where {dim}
+function solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.1, t_total=1) where {dim}
     setup = prepare_setup(rve)
     (; aⁿ, aⁿ⁺¹) = setup
     assemble_K_M!(setup)
@@ -59,7 +60,7 @@ function solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.25, t_tota
 	res = (t = Vector{Float64}(undef, nsteps+1),
            a = Vector{Vector{Float64}}(undef, nsteps+1))
     
-    Vector{Tuple{Float64,Int,Vector{Float64}}}(undef, nsteps+1) # TODO: maybe rather a named Tuple of vectors? -> easier to use later
+    
 	res.t[1] = 0.0
     res.a[1] = deepcopy(aⁿ)
 

@@ -35,23 +35,23 @@ include("fine_scale/mesh_generation.jl")
 export generate_rve_spheres, generate_rve_grid, generate_box_grid, 
     add_sphere_to_gmsh, generate_spheres, get_radius_pdf, get_tags_from_dimtags
 
-include("fine_scale/mesh_characteristics.jl")
-export get_volume
+#include("fine_scale/mesh_characteristics.jl")
+#export get_volume
 
 include("fine_scale/setup.jl")
 export prepare_setup
 
 include("fine_scale/assembly.jl")
-export assemble!, assemble_element!
+export assemble_K_M!, assemble_element!
 
 include("fine_scale/solve.jl")
 export compute_time_step!, solve_time_series
     
 include("fine_scale/plotting.jl")
-export plot_grid, plot_rve_grid, plot_mesh_overlay!, plot_potential, select_state, animate_result
+export animate_result
 
 #include("fine_scale/averaging.jl")
-export compute_homogenized_potential, compute_homogenized_gradient
+#export compute_homogenized_potential, compute_homogenized_gradient
     # Upscaling
 #=
 include("upscaling/averaging.jl")

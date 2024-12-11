@@ -1,5 +1,3 @@
-# IDEA: Merge assembly of K and M into one function to save some code?
-
 """
         assemble_K_M!(setup::RVESetup)
 

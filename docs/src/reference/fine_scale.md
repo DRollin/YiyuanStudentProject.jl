@@ -6,11 +6,9 @@ CurrentModule = YiyuanStudentProject
 
 ```@docs
 generate_rve_grid
-get_volume
-get_phase_bias
 prepare_setup
 add_bc!
-assemble!
+assemble_K_M!
 assemble_element!
 compute_time_step!
 solve_time_series

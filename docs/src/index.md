@@ -10,4 +10,4 @@ The aim of this project is to develop and implement a linear transient chemo-mec
 
 As can be told from the name, a chemo-mechanical problem refers to the situation where chemical reactions and mechanical changing are coupled together. Such problems are common in various fields, including battery science. Thus, a lithium-ion structural battery problem is discussed in this project. 
 
-This document provides an exhaustive examination of the mathematical model and comprehensive explanation the code implementation.
+This document provides an exhaustive examination of the mathematical model and comprehensive explanation of the code implementation with an example.

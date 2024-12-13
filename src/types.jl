@@ -96,7 +96,7 @@ A `PhaseSetup` type object that contains the relevant imformations for the eleme
 - `material`:       material struct,
 - `Kₑ`:             element stiffness matrix,
 - `Mₑ`:             element mass matrix,
-- `submatrices`:    submatrices for locating the unknown fields for element matrix assembly.
+- `subarrays`:    subarrays for locating the unknown fields for element matrix assembly.
 """
 struct PhaseSetup{dim}
     dh::DofHandler
@@ -106,7 +106,9 @@ struct PhaseSetup{dim}
     material::Material{dim}
     Kₑ::Matrix{Float64}
     Mₑ::Matrix{Float64}
-    submatrices::NamedTuple
+    Cₑ::Vector{Float64}
+    fₑ::Vector{Float64}
+    subarrays::NamedTuple
 end
 
 """
@@ -131,8 +133,10 @@ struct RVESetup{dim}
     phasesetups::NamedTuple{(:P,:M),Tuple{PhaseSetup{dim},PhaseSetup{dim}}}
     K::SparseMatrixCSC{Float64, Int64}
     M::SparseMatrixCSC{Float64, Int64}
+    f::Vector{Float64}
     J:: SparseMatrixCSC{Float64, Int64}
     g:: Vector{Float64}
     aⁿ::Vector{Float64}
     aⁿ⁺¹::Vector{Float64}
+    Vʳᵛᵉ::Float64
 end

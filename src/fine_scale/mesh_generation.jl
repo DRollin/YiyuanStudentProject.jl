@@ -29,7 +29,8 @@ function generate_box_grid(x₀::NTuple{3,Real}, xₑ::NTuple{3,Real}, ϕ::Real,
     return generate_box_grid(x₀, xₑ, spheres, meshsize)
 end
 function generate_box_grid(x₀::NTuple{3,Real}, xₑ::NTuple{3,Real}, spheres::Vector{BubbleBath.Sphere{3}}, meshsize::Real)
-    dim = 3
+    @info "Creating grid"
+    #dim = 3
     dx = xₑ .- x₀
     @assert all( x₀ .< xₑ ) "Lower bounds ($(x₀)) must be smaller than upper bounds ($(xₑ))!"
     nel = round.((Int,), dx ./ meshsize)
@@ -49,7 +50,7 @@ function generate_box_grid(x₀::NTuple{3,Real}, xₑ::NTuple{3,Real}, spheres::
     particles = getcellset(grid, "particles")
     allcells = Set( 1:length(grid.cells))
     addcellset!(grid, "matrix", setdiff(allcells, particles))
-    
+    @info "Grid created"
     return grid
 end
 

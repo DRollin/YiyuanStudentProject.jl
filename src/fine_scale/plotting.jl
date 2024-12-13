@@ -86,9 +86,12 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myres
     delete!(grid.cellsets, "sliced open X")
     delete!(grid.cellsets, "sliced open Y")
     delete!(grid.cellsets, "sliced open Z")
+    cellsᴾ = setdiff(cells, getcellset(grid, "matrix"))
+    cellsᴹ = setdiff(cells, getcellset(grid, "particles"))
 
     mesh = prepare_plotable_mesh(grid, cells)
-    
+    meshᴾ = prepare_plotable_mesh(grid, cellsᴾ)
+    meshᴹ = prepare_plotable_mesh(grid, cellsᴹ)
     fig = Makie.Figure(size=(1200,800))
 
 
@@ -99,15 +102,19 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myres
 
     
     ax  = Makie.Axis3(fig[2,1], aspect=:equal, title="undeformed grid")
-    Makie.mesh!(ax, mesh; color=Makie.RGB(0.5,0.5,1.0), shading=Makie.NoShading)
+    Makie.mesh!(ax, meshᴾ; color=Makie.RGB(1.0,0.5,0.5), shading=Makie.NoShading)
+    Makie.mesh!(ax, meshᴹ; color=Makie.RGB(0.5,0.5,1.0), shading=Makie.NoShading)
     Makie.wireframe!(ax, mesh; color=:black)
     
     u = evaluate_at_grid_nodes(dh, res.a[1], :u)
     uᵒᵇˢ = Makie.Observable(u)
-    deformedmesh = Makie.@lift prepare_plotable_mesh(grid, ( $(uᵒᵇˢ) .* n ), cells)
+    defmeshᴾ = Makie.@lift prepare_plotable_mesh(grid, ( $(uᵒᵇˢ) .* n ), cellsᴾ)
+    defmeshᴹ = Makie.@lift prepare_plotable_mesh(grid, ( $(uᵒᵇˢ) .* n ), cellsᴹ)
     ax = Makie.Axis3(fig[2,2], aspect=:equal, title="deformed grid")
-    Makie.mesh!(ax, deformedmesh; color=Makie.RGB(0.5,0.5,1.0), shading=Makie.NoShading)
-    Makie.wireframe!(ax, deformedmesh; color=:black)
+    Makie.mesh!(ax, defmeshᴾ; color=Makie.RGB(1.0,0.5,0.5), shading=Makie.NoShading)
+    Makie.mesh!(ax, defmeshᴹ; color=Makie.RGB(0.5,0.5,1.0), shading=Makie.NoShading)
+    Makie.wireframe!(ax, defmeshᴾ; color=:black)
+    Makie.wireframe!(ax, defmeshᴹ; color=:black)
 
     pos = fig[3,1]
     μ = evaluate_at_grid_nodes(dh, res.a[1], :μ)

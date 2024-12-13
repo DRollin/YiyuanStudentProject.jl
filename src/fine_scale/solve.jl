@@ -26,15 +26,18 @@ for the next time step solutions
 
 """
 function compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) where{dim}
-    (; grid, dh, K, M, g, J, aⁿ, aⁿ⁺¹) = setup
+    (; grid, dh, K, M, f, g, J, aⁿ, aⁿ⁺¹, Vʳᵛᵉ) = setup
     ch = ConstraintHandler(dh)
 	add_bc!(ch, grid, load)
 	close!(ch)
         # .nzval assures that structural zeros are NOT dropped (-> needed to apply constraints)
-    g .= (M .- K .* Δt ./ 2) * aⁿ 
+    apply!(K, f, ch)
+    f[end] = load.μ̄ * Vʳᵛᵉ
+    g .= M * f + (M .- K .* Δt ./ 2) * aⁿ 
     J.nzval .= (M.nzval .+ K.nzval .* Δt ./ 2)
-    apply!(J, g, ch) 
-    aⁿ⁺¹ .= J \ g 
+    #apply!(J, g, ch) 
+    aⁿ⁺¹ .= J \ g
+    apply!(aⁿ⁺¹, ch) 
     return setup, aⁿ⁺¹
 end
 
@@ -53,7 +56,7 @@ and `c` concentration for the whole time series with a certain time step.
 function solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.1, t_total=1) where {dim}
     setup = prepare_setup(rve)
     (; aⁿ, aⁿ⁺¹) = setup
-    assemble_K_M!(setup)
+    assemble_K_M_f!(setup)
     
 
     nsteps = ceil(Int, t_total/Δt)
@@ -63,12 +66,14 @@ function solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.1, t_total
     
 	res.t[1] = 0.0
     res.a[1] = deepcopy(aⁿ)
-
-    for i in 1:nsteps
-        compute_time_step!(setup, load, Δt)
-        aⁿ .= aⁿ⁺¹
-        res.t[i+1] = i*Δt
-        res.a[i+1] = deepcopy(aⁿ)
+    @withprogress name="Time stepping" begin
+        for i in 1:nsteps
+            compute_time_step!(setup, load, Δt)
+            aⁿ .= aⁿ⁺¹
+            res.t[i+1] = i*Δt
+            res.a[i+1] = deepcopy(aⁿ)
+            @logprogress i/nsteps
+        end
     end
 
     return res, setup

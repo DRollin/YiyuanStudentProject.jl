@@ -5,7 +5,6 @@ using Reexport
 using FerriteGmsh
 using SparseArrays, OrderedCollections
 
-
 using BubbleBath
 using Distributions: Uniform
 using LaTeXStrings
@@ -13,6 +12,12 @@ using WriteVTK
 using ForwardDiff
 
 import Makie: Makie, GeometryBasics
+
+using ProgressLogging
+using Logging: global_logger
+using TerminalLoggers: TerminalLogger
+
+global_logger(TerminalLogger())
 
 #include("C:\\Users\\Yiyua\\.julia\\packages\\Gmsh\\vuFrI\\src\\Gmsh.jl")
 
@@ -42,7 +47,7 @@ include("fine_scale/setup.jl")
 export prepare_setup
 
 include("fine_scale/assembly.jl")
-export assemble_K_M!, assemble_element!
+export assemble_K_M_f!, assemble_element!
 
 include("fine_scale/solve.jl")
 export compute_time_step!, solve_time_series

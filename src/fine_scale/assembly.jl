@@ -18,29 +18,38 @@ Do the whole assembly for all the phases:
     return assembled `Kₑ` and `Mₑ`.
 
 """
-function assemble_K_M!(setup::RVESetup)
-	(; phasesetups, K, M) = setup
-    assembler_K = start_assemble(K)
-    assembler_M = start_assemble(M)
+function assemble_K_M_f!(setup::RVESetup)
+	(; phasesetups, K, M, f) = setup
+    assembler_Kf = start_assemble(K, f)
+    assembler_M  = start_assemble(M)
     for phase in phasesetups
-        assemble_K_M!(assembler_K, assembler_M, phase)
+        assemble_K_M!(assembler_Kf, assembler_M, K, phase)
     end
-    return K, M
+    return K, M, f
 end
 
-function assemble_K_M!(assembler_K, assembler_M, setup::PhaseSetup)
-    (; dh, cells, cv, Kₑ, Mₑ) = setup
+function assemble_K_M!(assembler_Kf, assembler_M, K, setup::PhaseSetup)
+    (; dh, cells, cv, Kₑ, Mₑ, Cₑ, fₑ) = setup
+    @info "Assembling system"
     for cc in CellIterator(dh, cells)
         reinit!(cv.u, cc)
         reinit!(cv.c, cc)
         reinit!(cv.μ, cc)
         fill!(Kₑ, 0)
         fill!(Mₑ, 0)
+        fill!(Cₑ, 0)
+        fill!(fₑ, 0)
         assemble_element!(setup)
-        assemble!(assembler_K, celldofs(cc), Kₑ)
+        assemble!(assembler_Kf, celldofs(cc), Kₑ, fₑ)
         assemble!(assembler_M, celldofs(cc), Mₑ)
+        @show size(K[end, celldofs(cc)[dof_range(dh,:μ)]])
+        @show size(Cₑ)
+        K[end, celldofs(cc)[dof_range(dh,:μ)]] .+= Cₑ
+        @show 2
+        K[celldofs(cc)[dof_range(dh,:μ)], end] .+= Cₑ
     end
-    return assembler_K, assembler_M
+    @info "System assembled"
+    return assembler_Kf, assembler_M
 end
 
 """
@@ -62,7 +71,7 @@ Return the assembled mass matrix for coupling between the chemical potantial and
         - `μʳᵉᶠ`        reference chemical potantial.             
     - `Kₑ`:             The initialized element stiffness matrix to be assembled,
     - `Mₑ`:             The initialized element mass matrix to be assembled,
-    - `submatrices`:    Submatrices of certain coupled unknown fields, including:
+    - `subarrays`:    subarrays of certain coupled unknown fields, including:
         - `Kₑuu`:   	    Coupling matrix between displacement and displacement fields.
         - `Kₑuc`:   	    Coupling matrix between displacement and concentration fields.
         - `Kₑcu`:   	    Coupling matrix between concentration and displacement fields.
@@ -75,7 +84,7 @@ Return the assembled mass matrix for coupling between the chemical potantial and
 For each quadrature point the element volume is computed. Furthermore for each base function in corresponding field,
 evaluate the shape function for test function. The nodal value of a certain unknown field is then computed for each base funtion in that field.
 
-Then the coupling submatrices are computed as:
+Then the coupling subarrays are computed as:
 
 Kₑuu = ∫(δNϵi ⊡ E ⊡ Nϵj) * dΩ
 
@@ -100,9 +109,9 @@ where:
 
 """
 function assemble_element!(setup::PhaseSetup)
-    (; cv, nbf, material, Kₑ, Mₑ, submatrices) = setup
+    (; cv, nbf, material, Kₑ, Mₑ, Cₑ, fₑ, subarrays) = setup
     (; E, αᶜʰ, k, cʳᵉᶠ, M, μʳᵉᶠ) = material
-    (; Kₑuu, Kₑuc, Kₑcu, Kₑcc, Kₑcμ, Kₑμμ, Mₑμc) = submatrices
+    (; Kₑuu, Kₑuc, Kₑcu, Kₑcc, Kₑcμ, Kₑμμ, Mₑμc, fₑu, fₑc) = subarrays
 
     for qp in 1:getnquadpoints(cv.u)
         dΩ = getdetJdV(cv.u, qp)
@@ -116,8 +125,10 @@ function assemble_element!(setup::PhaseSetup)
 
             for j in 1:nbf.c
                 Ncj = shape_value(cv.c, qp, j)
-                Kₑuc[i, j] -= (δNϵi ⊡ E ⊡ (αᶜʰ*(Ncj - cʳᵉᶠ))) * dΩ
+                Kₑuc[i, j] -= (δNϵi ⊡ E ⊡ αᶜʰ * Ncj) * dΩ
             end
+
+            fₑu[i] -= (δNϵi ⊡ E ⊡ αᶜʰ * cʳᵉᶠ) * dΩ
         end
 
         for i in 1:nbf.c
@@ -125,18 +136,20 @@ function assemble_element!(setup::PhaseSetup)
 
             for j in 1:nbf.u
                 Nϵj = shape_symmetric_gradient(cv.u, qp, j)
-                Kₑcu[i, j] += (δNci * (αᶜʰ ⊡ E ⊡ Nϵj))* dΩ
+                Kₑcu[i, j] += (δNci * (Nϵj ⊡ E ⊡ αᶜʰ)) * dΩ
             end
 
             for j in 1:nbf.c
                 Ncj = shape_value(cv.c, qp, j)
-                Kₑcc[i, j] -= (δNci * (k*(Ncj-cʳᵉᶠ) + αᶜʰ ⊡ E ⊡(αᶜʰ*(Ncj - cʳᵉᶠ))))* dΩ
+                Kₑcc[i, j] -= (δNci * (k + αᶜʰ ⊡ E ⊡ αᶜʰ) * Ncj) * dΩ
             end
 
             for j in 1:nbf.μ
                 Nμj = shape_value(cv.μ, qp, j)
-                Kₑcμ[i, j] += (δNci * (Nμj - μʳᵉᶠ)) * dΩ
+                Kₑcμ[i, j] += (δNci * Nμj) * dΩ
             end
+
+            fₑc[i] += (δNci * (μʳᵉᶠ - (k + αᶜʰ ⊡ E ⊡ αᶜʰ)*cʳᵉᶠ)) * dΩ
         end
 
         for i in 1:nbf.μ
@@ -152,9 +165,11 @@ function assemble_element!(setup::PhaseSetup)
                 Ncj = shape_value(cv.c, qp, j)
                 Mₑμc[i, j] += (Ncj * δNμi) * dΩ
             end
+
+            Cₑ[i] += δNμi * dΩ
         end
     end
 
-    return Kₑ, Mₑ
+    return Kₑ, Mₑ, Cₑ, fₑ
 end
 

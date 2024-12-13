@@ -17,7 +17,7 @@ function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 
 	#centernode =  OrderedSet{Int}([ argmin(n -> norm(n.x), grid.nodes) ])
 	add!(ch, Dirichlet(:u, centernode, (x,t) -> zero(Vec{3})))
-	add!(ch, Dirichlet(:μ, centernode, (x,t) -> μ̄))
+	#add!(ch, Dirichlet(:μ, centernode, (x,t) -> μ̄))
 	return ch
 end
 
@@ -49,7 +49,7 @@ Number of base function for each unknown fields is defined using `getnbasefuncti
 
 Calling function `add_bc!` to initialize the boundary conditions and associate this to the dofhandler.
 
-Local stiffness and mass matrices are initialized. Submatrices for locating the corresponding field interaction in elementweise by calling the macro `@view`.
+Local stiffness and mass matrices are initialized. subarrays for locating the corresponding field interaction in elementweise by calling the macro `@view`.
 
 A named tuple with the Struct `PhaseSetup` is then prepared for each `P` stands for particals and `M` for matrix.
 
@@ -58,7 +58,8 @@ Gloable stiffness, mass, and jacobian matrices is initialized using `allocate_ma
 initialize the gloable residual vector and the solution vectors for both current and next time step.
 """
 function prepare_setup(rve::RVE{dim}) where {dim}
-    (; grid, P, M) = rve
+    @info "Preparing setup"
+	(; grid, P, M) = rve
 	
 	P_material = P
 	M_material = M
@@ -91,7 +92,9 @@ function prepare_setup(rve::RVE{dim}) where {dim}
 
 	Kₑ = zeros(sum(nbf), sum(nbf))
 	Mₑ = deepcopy(Kₑ)
-	submatrices = (
+	Cₑ = zeros(nbf.μ)
+	fₑ = zeros(sum(nbf))
+	subarrays = (
 		Kₑuu = @view(Kₑ[dof_range(dh, :u), dof_range(dh, :u)]),
 		Kₑuμ = @view(Kₑ[dof_range(dh, :u), dof_range(dh, :μ)]),
 		Kₑμu = @view(Kₑ[dof_range(dh, :μ), dof_range(dh, :u)]),
@@ -110,24 +113,48 @@ function prepare_setup(rve::RVE{dim}) where {dim}
 		Mₑμc = @view(Mₑ[dof_range(dh, :μ), dof_range(dh, :c)]),
 		Mₑcμ = @view(Mₑ[dof_range(dh, :c), dof_range(dh, :μ)]),
 		Mₑcc = @view(Mₑ[dof_range(dh, :c), dof_range(dh, :c)]),
+		fₑu  = @view(fₑ[dof_range(dh, :u)]),
+		fₑμ  = @view(fₑ[dof_range(dh, :μ)]),
+		fₑc  = @view(fₑ[dof_range(dh, :c)]),
 	)
  
-	setups = (P = PhaseSetup{dim}(dh, setP, cv, nbf, P, Kₑ, Mₑ, submatrices), 
-	          M = PhaseSetup{dim}(dh, setM, cv, nbf, M, Kₑ, Mₑ, submatrices))
+	setups = (P = PhaseSetup{dim}(dh, setP, cv, nbf, P, Kₑ, Mₑ, Cₑ, fₑ, subarrays), 
+	          M = PhaseSetup{dim}(dh, setM, cv, nbf, M, Kₑ, Mₑ, Cₑ, fₑ, subarrays))
 
+		# System matrix with Lagrange multiplier for <μ> = μ̄
+	dofsμ = Set{Int}([ dof for cell in 1:getncells(grid) for dof in celldofs(dh, cell)[dof_range(dh, :μ)] ])
+	dofsμ = sort!(collect(dofsμ))
+	C = sparse(ones(Int, length(dofsμ)), dofsμ, zeros(length(dofsμ)), 1, ndofs(dh))
 	K = allocate_matrix(dh, ch)
-	M = allocate_matrix(dh, ch)
-	J = allocate_matrix(dh, ch)
-	g    = zeros(ndofs(dh))
-	aⁿ   = zeros(ndofs(dh))
-    aⁿ⁺¹ = zeros(ndofs(dh))
+	K = hcat( vcat(K, C), copy(hcat(C, spzeros(1,1))') )
 
-	
+	M = deepcopy(K)
+	J = deepcopy(K)
+	f = zeros(ndofs(dh) + 1)
+	g    = deepcopy(f)
+	aⁿ   = deepcopy(f)
+    aⁿ⁺¹ = deepcopy(f)
+
 	apply_analytical!(aⁿ, dh, :c, (x -> P_material.cʳᵉᶠ), setP)
 	apply_analytical!(aⁿ, dh, :c, (x -> M_material.cʳᵉᶠ), setM)
 	apply_analytical!(aⁿ, dh, :μ, (x -> P_material.μʳᵉᶠ), setP)
 	apply_analytical!(aⁿ, dh, :μ, (x -> M_material.μʳᵉᶠ), setM)
-	
 
-	return RVESetup{dim}(grid, dh, setups, K, M, J, g, aⁿ, aⁿ⁺¹) 
+	Vʳᵛᵉ = get_volume(grid, cv.u)
+	
+	setup = RVESetup{dim}(grid, dh, setups, K, M, f, J, g, aⁿ, aⁿ⁺¹, Vʳᵛᵉ) 
+	@info "Setup prepared"
+	return setup
+end
+
+
+function get_volume(grid::Grid, cv::CellValues)
+    V = 0.0
+    for cc in CellIterator(grid)
+		reinit!(cv, cc)
+		for qp in 1:getnquadpoints(cv)
+        	V +=  getdetJdV(cv, qp)
+		end
+    end
+    return V
 end

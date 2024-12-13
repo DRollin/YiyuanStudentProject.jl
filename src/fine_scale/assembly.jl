@@ -42,10 +42,7 @@ function assemble_K_M!(assembler_Kf, assembler_M, K, setup::PhaseSetup)
         assemble_element!(setup)
         assemble!(assembler_Kf, celldofs(cc), Kₑ, fₑ)
         assemble!(assembler_M, celldofs(cc), Mₑ)
-        @show size(K[end, celldofs(cc)[dof_range(dh,:μ)]])
-        @show size(Cₑ)
         K[end, celldofs(cc)[dof_range(dh,:μ)]] .+= Cₑ
-        @show 2
         K[celldofs(cc)[dof_range(dh,:μ)], end] .+= Cₑ
     end
     @info "System assembled"

@@ -101,12 +101,11 @@ A `PhaseSetup` type object that contains the relevant imformations for the eleme
 struct PhaseSetup{dim}
     dh::DofHandler
     cells::OrderedSet{Int}
-    cv::NamedTuple
-    nbf::NamedTuple
+    cv::NamedTuple{(:u,:μ,:c),NTuple{3,CellValues}}
+    nbf::NamedTuple{(:u,:μ,:c),NTuple{3,Int}}
     material::Material{dim}
     Kₑ::Matrix{Float64}
     Mₑ::Matrix{Float64}
-    Cₑ::Vector{Float64}
     fₑ::Vector{Float64}
     subarrays::NamedTuple
 end
@@ -138,5 +137,4 @@ struct RVESetup{dim}
     g:: Vector{Float64}
     aⁿ::Vector{Float64}
     aⁿ⁺¹::Vector{Float64}
-    Vʳᵛᵉ::Float64
 end

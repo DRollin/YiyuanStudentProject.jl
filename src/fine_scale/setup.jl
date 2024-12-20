@@ -5,18 +5,22 @@ Add a periodic boundary condition for the unknown fields respectively on the `�
 """
 function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 	(; ε̄, μ̄, ζ̄) = load
-	∂Ω = vcat( collect_periodic_facets(grid, "left", "right"),
-               collect_periodic_facets(grid, "bottom", "top"),
-			   collect_periodic_facets(grid, "front", "back") )
-	add!(ch, PeriodicDirichlet(:μ, ∂Ω, (x,t) -> ζ̄⋅x))
-	add!(ch, PeriodicDirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x))
+	#∂Ω = vcat( collect_periodic_facets(grid, "left", "right"),
+    #           collect_periodic_facets(grid, "bottom", "top"),
+	#		   collect_periodic_facets(grid, "front", "back") )
+	#add!(ch, PeriodicDirichlet(:μ, ∂Ω, (x,t) -> ζ̄⋅x))
+	#add!(ch, PeriodicDirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x))
+	
+	∂Ω = union(getfacetset.([grid], ["left", "right", "bottom", "top", "back", "front"])...)
+	add!(ch, Dirichlet(:μ, ∂Ω, (x,t) -> μ̄ + ζ̄⋅x))
+	add!(ch, Dirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x))
 
-	centernode_idx = argmin((idx_node) -> norm(idx_node[2].x), enumerate(grid.nodes))[1]
+	#centernode_idx = argmin((idx_node) -> norm(idx_node[2].x), enumerate(grid.nodes))[1]
 
-	centernode = OrderedSet{Int}([centernode_idx])
+	#centernode = OrderedSet{Int}([centernode_idx])
 
 	#centernode =  OrderedSet{Int}([ argmin(n -> norm(n.x), grid.nodes) ])
-	add!(ch, Dirichlet(:u, centernode, (x,t) -> zero(Vec{3})))
+	#add!(ch, Dirichlet(:u, centernode, (x,t) -> zero(Vec{3})))
 	#add!(ch, Dirichlet(:μ, centernode, (x,t) -> μ̄))
 	return ch
 end
@@ -64,7 +68,7 @@ function prepare_setup(rve::RVE{dim}) where {dim}
 
 	
 	refshape   = _get_ref_shape(Val(dim))
-	setP, setM = getcellset(grid, "particles"), getcellset(grid, "matrix")
+	Ωᴾ, Ωᴹ = getcellset(grid, "particles"), getcellset(grid, "matrix")
 		
 	ip = (u = Lagrange{refshape,1}()^dim,
 	      μ = Lagrange{refshape,1}(),
@@ -90,7 +94,6 @@ function prepare_setup(rve::RVE{dim}) where {dim}
 
 	Kₑ = zeros(sum(nbf), sum(nbf))
 	Mₑ = deepcopy(Kₑ)
-	Cₑ = zeros(nbf.μ)
 	fₑ = zeros(sum(nbf))
 	subarrays = (
 		Kₑuu = @view(Kₑ[dof_range(dh, :u), dof_range(dh, :u)]),
@@ -116,43 +119,23 @@ function prepare_setup(rve::RVE{dim}) where {dim}
 		fₑc  = @view(fₑ[dof_range(dh, :c)]),
 	)
  
-	setups = (P = PhaseSetup{dim}(dh, setP, cv, nbf, P, Kₑ, Mₑ, Cₑ, fₑ, subarrays), 
-	          M = PhaseSetup{dim}(dh, setM, cv, nbf, M, Kₑ, Mₑ, Cₑ, fₑ, subarrays))
+	setups = (P = PhaseSetup{dim}(dh, Ωᴾ, cv, nbf, P, Kₑ, Mₑ, fₑ, subarrays), 
+	          M = PhaseSetup{dim}(dh, Ωᴹ, cv, nbf, M, Kₑ, Mₑ, fₑ, subarrays))
 
-		# System matrix with Lagrange multiplier for <μ> = μ̄
-	dofsμ = Set{Int}([ dof for cell in 1:getncells(grid) for dof in celldofs(dh, cell)[dof_range(dh, :μ)] ])
-	dofsμ = sort!(collect(dofsμ))
-	C = sparse(ones(Int, length(dofsμ)), dofsμ, zeros(length(dofsμ)), 1, ndofs(dh))
 	K = allocate_matrix(dh, ch)
-	K = hcat( vcat(K, C), copy(hcat(C, spzeros(1,1))') )
-
 	M = deepcopy(K)
 	J = deepcopy(K)
-	f = zeros(ndofs(dh) + 1)
+	f = zeros(ndofs(dh))
 	g    = deepcopy(f)
 	aⁿ   = deepcopy(f)
     aⁿ⁺¹ = deepcopy(f)
 
-	apply_analytical!(aⁿ, dh, :c, (x -> P_material.cʳᵉᶠ), setP)
-	apply_analytical!(aⁿ, dh, :c, (x -> M_material.cʳᵉᶠ), setM)
-	apply_analytical!(aⁿ, dh, :μ, (x -> P_material.μʳᵉᶠ), setP)
-	apply_analytical!(aⁿ, dh, :μ, (x -> M_material.μʳᵉᶠ), setM)
-
-	Vʳᵛᵉ = get_volume(grid, cv.u)
+	apply_analytical!(aⁿ, dh, :c, (x -> P_material.cʳᵉᶠ), Ωᴾ)
+	apply_analytical!(aⁿ, dh, :c, (x -> M_material.cʳᵉᶠ), Ωᴹ)
+	apply_analytical!(aⁿ, dh, :μ, (x -> P_material.μʳᵉᶠ), Ωᴾ)
+	apply_analytical!(aⁿ, dh, :μ, (x -> M_material.μʳᵉᶠ), Ωᴹ)
 	
-	setup = RVESetup{dim}(grid, dh, setups, K, M, f, J, g, aⁿ, aⁿ⁺¹, Vʳᵛᵉ) 
+	setup = RVESetup{dim}(grid, dh, setups, K, M, f, J, g, aⁿ, aⁿ⁺¹) 
 	@info "Setup prepared"
 	return setup
-end
-
-
-function get_volume(grid::Grid, cv::CellValues)
-    V = 0.0
-    for cc in CellIterator(grid)
-		reinit!(cv, cc)
-		for qp in 1:getnquadpoints(cv)
-        	V +=  getdetJdV(cv, qp)
-		end
-    end
-    return V
 end

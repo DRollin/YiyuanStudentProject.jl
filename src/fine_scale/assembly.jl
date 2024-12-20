@@ -29,8 +29,8 @@ function assemble_K_M_f!(setup::RVESetup)
     return K, M, f
 end
 
-function assemble_K_M_f!(assembler_Kf, assembler_M, K, setup::PhaseSetup)
-    (; dh, cells, cv, Kₑ, Mₑ, Cₑ, fₑ) = setup
+function assemble_K_M_f!(assembler_Kf, assembler_M, K, setup::PhaseSetup{dim}) where {dim}
+    (; dh, cells, cv, Kₑ, Mₑ, fₑ) = setup
     @info "Assembling system"
     for cc in CellIterator(dh, cells)
         reinit!(cv.u, cc)
@@ -38,13 +38,10 @@ function assemble_K_M_f!(assembler_Kf, assembler_M, K, setup::PhaseSetup)
         reinit!(cv.μ, cc)
         fill!(Kₑ, 0)
         fill!(Mₑ, 0)
-        fill!(Cₑ, 0)
         fill!(fₑ, 0)
         assemble_element!(setup)
         assemble!(assembler_Kf, celldofs(cc), Kₑ, fₑ)
         assemble!(assembler_M, celldofs(cc), Mₑ)
-        K[end, celldofs(cc)[dof_range(dh,:μ)]] .+= Cₑ
-        K[celldofs(cc)[dof_range(dh,:μ)], end] .+= Cₑ
     end
     @info "System assembled"
     return assembler_Kf, assembler_M
@@ -86,7 +83,7 @@ where:
 - `dΩ`:      Determinant of the Jacobian times the quadrature weight
 """
 function assemble_element!(setup::PhaseSetup)
-    (; cv, nbf, material, Kₑ, Mₑ, Cₑ, fₑ, subarrays) = setup
+    (; cv, nbf, material, Kₑ, Mₑ, fₑ, subarrays) = setup
     (; E, αᶜʰ, k, cʳᵉᶠ, M, μʳᵉᶠ) = material
     (; Kₑuu, Kₑuc, Kₑcu, Kₑcc, Kₑcμ, Kₑμμ, Mₑμc, fₑu, fₑc) = subarrays
 
@@ -144,11 +141,8 @@ function assemble_element!(setup::PhaseSetup)
                 Ncj = shape_value(cv.c, qp, j)
                 Mₑμc[i, j] += (Ncj * δNμi) * dΩ
             end
-
-            Cₑ[i] += δNμi * dΩ
         end
     end
 
-    return Kₑ, Mₑ, Cₑ, fₑ
+    return Kₑ, Mₑ, fₑ
 end
-

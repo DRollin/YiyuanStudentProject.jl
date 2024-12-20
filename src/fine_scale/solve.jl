@@ -18,15 +18,11 @@ for the next time step solutions.
 
 """
 function compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) where{dim}
-    (; grid, dh, K, M, f, g, J, aⁿ, aⁿ⁺¹, Vʳᵛᵉ) = setup
+    (; grid, dh, K, M, f, g, J, aⁿ, aⁿ⁺¹) = setup
     ch = ConstraintHandler(dh)
 	add_bc!(ch, grid, load)
 	close!(ch)
         # .nzval assures that structural zeros are NOT dropped (-> needed to apply constraints)
-    #apply!(K, f, ch)
-    f[end] = load.μ̄ * Vʳᵛᵉ
-    #g .= M * f + (M .- K .* Δt ./ 2) * aⁿ
-    #J.nzval .= (M.nzval .+ K.nzval .* Δt ./ 2)
     g .= Δt .* f .+ (M .- K .* Δt ./ 2) * aⁿ
     J.nzval .= (M.nzval .+ K.nzval .* Δt ./ 2 .+ 1e-10)
     apply!(J, g, ch) 

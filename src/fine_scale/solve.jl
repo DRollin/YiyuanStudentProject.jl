@@ -4,15 +4,7 @@
 Compute the solution for the next time step in a Representative Volume Element (RVE) simulation using an implicit time integration scheme.
 
 # Arguments
-- `setup::RVESetup{dim}`:   The setup object containing parameters for the RVE simulation:
-  - `grid`:                 The finite element grid,
-  - `dh`:                   The degrees of freedom handler,
-  - `K`:                    The gloable stiffness matrix,
-  - `M`:                    The gloable mass matrix,
-  - `g`:                    The residual vector (force vector),
-  - `J`:                    The jacobian matrix (system matrix),
-  - `aⁿ`:                   The solution vector at the current time step,
-  - `aⁿ⁺¹`:                 The solution vector at the next time step,
+- `setup::RVESetup{dim}`:   The setup object containing parameters for the RVE simulation
 - `load::LoadCase{dim}`:    The load case specifying boundary conditions and external loads for the current time step.
 - `Δt::Real`:               The time step size.
 
@@ -22,7 +14,7 @@ This function uses Crank-Nicolson Method to compute the solution in an implicit 
 the linear system in the next time step:
 
 The function applies boundary conditions to the system matrix and force vector using a constraint handler before solving 
-for the next time step solutions
+for the next time step solutions.
 
 """
 function compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) where{dim}
@@ -36,7 +28,7 @@ function compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) wher
     #g .= M * f + (M .- K .* Δt ./ 2) * aⁿ
     #J.nzval .= (M.nzval .+ K.nzval .* Δt ./ 2)
     g .= Δt .* f .+ (M .- K .* Δt ./ 2) * aⁿ
-    J.nzval .= (M.nzval .+ K.nzval .* Δt ./ 2)
+    J.nzval .= (M.nzval .+ K.nzval .* Δt ./ 2 .+ 1e-10)
     apply!(J, g, ch) 
     aⁿ⁺¹ .= J \ g
     apply!(aⁿ⁺¹, ch) 
@@ -47,8 +39,8 @@ end
 """
     solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.25, t_total=1) where {dim}
 
-Compute the results in a named tuple with fields `t` total time cost and `a` solution vector contains `u` displacement, `μ` chemical potantial, 
-and `c` concentration for the whole time series with a certain time step. 
+Compute the results in a `NamedTuple` with fields `t` total time and `a` solution vector series contain `u` displacement, `μ` chemical potantial, 
+and `c` concentration for the whole time series with a certain time step width. 
 
 # Arguments
 - `rve`:    Object for solving function `prepare_setup`,

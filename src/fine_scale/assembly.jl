@@ -1,21 +1,22 @@
 """
-        assemble_K_M!(setup::RVESetup)
+        assemble_K_M_f!(setup::RVESetup)
 
 Return the assembled mass matrix `M` and stiffness matrix `K`.
 
 # Arguments:
-- `setup`:   A preconfigured object type that defined for RVE assembly. Fields from `setup` are used in this function:
+- `setup`:   A preconfigured object that defined for RVE assembly. Fields from `setup` are used in this function:
     - `phasesetups`: A preconfigured object type that defined for elementweise assembly,
-    - `M`:           Initialized gloable mass matrix to be assembled,
-    - `K`:           Initialized gloable stiffness matrix to be assembled.
+    - `M`:           Initialized global mass matrix to be assembled,
+    - `K`:           Initialized global stiffness matrix to be assembled,
+    - `f`:           Initialized global right hand side vector to be assembled.
 
 # Implementation Details:
-Create a `CSCAssembler` for both K and M.
+Create a `CSCAssembler` for both K, f, and M.
 
 Do the whole assembly for all the phases:
-    for all cells update the cell values for all the unknown fields and initialize both `Kₑ` and `Mₑ`,
+    for all cells update the cell values for all the unknown fields and fill zeros to the 
     do element assembly,
-    return assembled `Kₑ` and `Mₑ`.
+    return assembled `Kₑ`, `Mₑ` and `fₑ`.
 
 """
 function assemble_K_M_f!(setup::RVESetup)
@@ -23,12 +24,12 @@ function assemble_K_M_f!(setup::RVESetup)
     assembler_Kf = start_assemble(K, f)
     assembler_M  = start_assemble(M)
     for phase in phasesetups
-        assemble_K_M!(assembler_Kf, assembler_M, K, phase)
+        assemble_K_M_f!(assembler_Kf, assembler_M, K, phase)
     end
     return K, M, f
 end
 
-function assemble_K_M!(assembler_Kf, assembler_M, K, setup::PhaseSetup)
+function assemble_K_M_f!(assembler_Kf, assembler_M, K, setup::PhaseSetup)
     (; dh, cells, cv, Kₑ, Mₑ, Cₑ, fₑ) = setup
     @info "Assembling system"
     for cc in CellIterator(dh, cells)
@@ -55,31 +56,11 @@ end
 Return the assembled mass matrix for coupling between the chemical potantial and the concentration fields.
 
 # Arguments:
-- `setup`:  a preconfigured object type that defined for elementweise assembly. Fields from `setup` are used in this function:
-
-    - `cv`:             Cell values for all unknown fields,
-    - `nbf`:            The number of basis functions for all unknown fields,
-    - `material`:       The predefined material parameters for both phase particals and matrix:
-        - `E`:          fourth order stiffness tensor E,
-        - `αᶜʰ`:        isotropic ion intercalation tensor,
-        - `k`:          concentration-chemical potantial coefficient,
-        - `cʳᵉᶠ`:       reference concentration,
-        - `M`:          mobility tensor,
-        - `μʳᵉᶠ`        reference chemical potantial.             
-    - `Kₑ`:             The initialized element stiffness matrix to be assembled,
-    - `Mₑ`:             The initialized element mass matrix to be assembled,
-    - `subarrays`:    subarrays of certain coupled unknown fields, including:
-        - `Kₑuu`:   	    Coupling matrix between displacement and displacement fields.
-        - `Kₑuc`:   	    Coupling matrix between displacement and concentration fields.
-        - `Kₑcu`:   	    Coupling matrix between concentration and displacement fields.
-        - `Kₑcc`:   	    Coupling matrix between concentration and concentration fields.
-        - `Kₑcμ`:   	    Coupling matrix between concentration and chemical potential fields.
-        - `Kₑμμ`:           Coupling matrix between chemical potential and chemical potential fields.
-        - `Mₑμc`:   	    Coupling matrix between chemical potential and concentration fields.
+- `setup`:  a preconfigured object type that defined for elementweise assembly. 
 
 # Implementation Details:
 For each quadrature point the element volume is computed. Furthermore for each base function in corresponding field,
-evaluate the shape function for test function. The nodal value of a certain unknown field is then computed for each base funtion in that field.
+evaluate the shape function for the test function. The nodal value of a certain unknown field is then computed for each base funtion in that field.
 
 Then the coupling subarrays are computed as:
 
@@ -98,20 +79,21 @@ Kₑμμ = ∫(δN∇μi ⋅ M ⋅ N∇μj) * dΩ
 Mₑμc = ∫(Ncj * δNμi) * dΩ
 
 where:
-- `Nxj`:     Shape function for x field nodal values
+- `Nxj`:     Shape function of field x 
 - `δNxi`:    Shape function for x field test function
-- `N∇xj`:    Gradient of Shape function for x field nodal values
-- `δN∇xi`:   Gradient of Shape function for x field test function
-- `dΩ`:      Determinant of the Jacobian times the quadrature weight (element volume)
-
+- `N∇xj`:    Gradient of shape function of field x 
+- `δN∇xi`:   Gradient of shape function for test function of field x
+- `dΩ`:      Determinant of the Jacobian times the quadrature weight
 """
 function assemble_element!(setup::PhaseSetup)
     (; cv, nbf, material, Kₑ, Mₑ, Cₑ, fₑ, subarrays) = setup
     (; E, αᶜʰ, k, cʳᵉᶠ, M, μʳᵉᶠ) = material
     (; Kₑuu, Kₑuc, Kₑcu, Kₑcc, Kₑcμ, Kₑμμ, Mₑμc, fₑu, fₑc) = subarrays
 
+   
     for qp in 1:getnquadpoints(cv.u)
         dΩ = getdetJdV(cv.u, qp)
+        μ = function_value(cv.μ, qp, aₑμ)
         for i in 1:nbf.u
             δNϵi = shape_symmetric_gradient(cv.u, qp, i)
             

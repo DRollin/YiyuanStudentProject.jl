@@ -21,7 +21,7 @@ prepare_plotable_mesh(grid::Grid{dim}, u::Vector{<:Vec{dim}}) where {dim} = prep
 """
     plot_grid(grid::Grid{3})
 
-Ruturn a Makie.Fifure to visualize a 3D finite element grid using the Makie plotting library.
+Ruturn a Makie.Figure to visualize a 3D finite element grid using the Makie plotting library.
 
 # Arguments:
 - `grid::Grid{3}`: A 3D grid object representing the finite element mesh to be visualized. 
@@ -50,15 +50,15 @@ end
 """
     animate_result(res::NamedTuple, setup::RVESetup{dim}, file_name::String="Myresult.mp4", n::Number)
 
-Return an animation showing the evolution of the solution for a 3D Representative Volume Element (RVE) simulation.
+Return an animation showing the evolution of the solution for a 3D RVE simulation.
 
 # Arguments:
-- `res`:         A named tuple containing the simulation results
+- `res`:         A `NamedTuple` containing the simulation results
 - `setup`:       The setup object for the RVE simulation, containing: `grid` and `dh` fields
 - `file_name`:   The path and name of the output animation file (default: `"Myresult.mp4"`)
 - `n`:           Scaling factor for displacement
 
-# Details Implementation:
+# Implementation Details:
 A plotable mesh is generated using `prepare_plotable_mesh` with a cut open to show the inner structure.
 
 A Figure is plotted showing the results of for displacement `u`, chemical potantial `μ`, concentration`c` at each time step.

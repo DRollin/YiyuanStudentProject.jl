@@ -1,16 +1,16 @@
 """
     Material{dim,T}
 
-A `Material` material type object used for defining the material character with the following parameters:
+A ``Material`` characterize the constitutive behavior with:
 
 - `E`:          fourth order stiffness tensor E,
-- `αᶜʰ`:        isotropic ion intercalation tensor,
-- `k`:          concentration-chemical potantial coefficient,
+- `αᶜʰ`:        second order ion intercalation tensor,
+- `k`:          concentration-chemical potential coefficient,
 - `cʳᵉᶠ`:       reference concentration,
-- `M`:          mobility tensor,
+- `M`:          second order mobility tensor,
 - `μʳᵉᶠ`        reference chemical potantial.
 
-The type can be created by calling the funtion `Material{dim}(; G::T, K::T, η::T, cʳᵉᶠ::T, μʳᵉᶠ::T, θʳᵉᶠ::T, cᵐ::T, α::T, R::T=8.31446261815324) where {dim, T<:Real}`
+A ``Material`` with isotropic properties can be created by calling the funtion `Material{dim}(; G::T, K::T, η::T, cʳᵉᶠ::T, μʳᵉᶠ::T, θʳᵉᶠ::T, cᵐ::T, α::T, R::T=8.31446261815324) where {dim, T<:Real}`
 """
 struct Material{dim,T}
     E::Tensor{4,dim,T}
@@ -29,9 +29,9 @@ function Material{dim}(; G::T, K::T, η::T, cʳᵉᶠ::T, μʳᵉᶠ::T, θʳᵉ
 end
 
 """
-    RVE{dim}
+    [RVE{dim}](@ref)
 
-An object called `RVE` that contains
+A ``RVE`` is defined by a geometry and material characteristic of constituents that contains
 - `grid`:       a Grid for the prescribed RVE,
 - `P`:          Material type for partical constraints,
 - `M`:          Material type for matrix.
@@ -50,12 +50,12 @@ end
 """
     LoadCase{dim}
 
-A `LoadCase` type object that defined the external forces
-- `ε̄`:          averaging external strain Tensor,
+A `LoadCase` defines the macro scale quantities imposed on RVE as loading
+- `ε̄`:          averaging external strain tensor,
 - `μ̄`:          averaging chemical potantial on the boundary,
 - `ζ̄`          gradient of the averaging chemical potantial on the boundary.
 
-The struct can be created by calling the funtion `LoadCase(dim::Int; kwargs...)
+To create a ``LoadCase`` by defining only the non-zero tensor components the constructor `LoadCase(dim::Int; kwargs...)` can be used.
 """
 struct LoadCase{dim}
     ε̄::SymmetricTensor{2,dim,Float64}
@@ -88,15 +88,16 @@ end
 """
     PhaseSetup{dim}
 
-A `PhaseSetup` type object that contains the relevant imformations for the element assembly:
-- `dh`:             dofHandler based on the given grid,
-- `cells`:          ordered cell sets,
-- `cv`:             cellvalues in named tuple for each unknown field representivly,
-- `nbf`:            number of base function in named tuple for the unknown fields representivly,
-- `material`:       material struct,
+A `PhaseSetup` contains the relevant imformation for the element assembly:
+- `dh`:             ``DofHandler`` based on the given grid,
+- `cells`:          ordered cell set defining the phase domain,
+- `cv`:             ``CellValues`` in ``NamedTuple`` for each unknown field,
+- `nbf`:            number of base function in ``NamedTuple`` for the unknown fields,
+- `material`:       ``Material`` of the phase,
 - `Kₑ`:             element stiffness matrix,
 - `Mₑ`:             element mass matrix,
-- `subarrays`:    subarrays for locating the unknown fields for element matrix assembly.
+- `fₑ`:             element right hand side vector,
+- `subarrays`:      subarrays blocks associated with the unknown fields for element matrix assembly.
 """
 struct PhaseSetup{dim}
     dh::DofHandler
@@ -114,16 +115,18 @@ end
 """
     RVESetup{dim}
 
-A `PhaseSetup` object that contains the relevant imformations for the problem solving/time stepping:
-- `grid`:           a Grid for the prescribed RVE,
-- `dh`:             dofHandler based on the given grid,
-- `phasesetups`:    struct PhaseSetup in named tuple for each unknown field representivly,
-- `K`:              stiffness matrix
-- `M`:              mass matrix
-- `J`:              jacobian matrix for time stepping
-- `g`:              residual vector for time stepping
-- `aⁿ`:              unknowns in current step
-- `aⁿ⁺¹`:           unknowns in next step
+A `PhaseSetup` contains the relevant imformation for the solving the transient problem:
+- `grid`:           a ``Grid`` defining the RVE geometry,
+- `dh`:             ``DofHandler`` based on the given grid,
+- `phasesetups`:    ``PhaseSetup`` in ``NamedTuple`` for each unknown field,
+- `K`:              stiffness matrix,
+- `M`:              mass matrix,
+- `f`:              right hand side vector,
+- `J`:              system matrix for time stepping,
+- `g`:              system vector for time stepping,
+- `aⁿ`:             unknowns at current time,
+- `aⁿ⁺¹`:           unknowns after performing a time,
+- `Vʳᵛᵉ`:           Volume of the RVE.
 """
 struct RVESetup{dim}
 	grid::Grid{dim}

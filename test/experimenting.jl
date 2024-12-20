@@ -5,7 +5,7 @@ dim = 3
 
 P = Material{dim}(; G=4.0e5, K=6.0e5, η=1.0, cʳᵉᶠ=1.0, μʳᵉᶠ=1.0, θʳᵉᶠ=1.0, cᵐ=1.0, α=0.0001)
 M = Material{dim}(; G=2.0e5, K=3.0e5, η=1.0, cʳᵉᶠ=1.0, μʳᵉᶠ=1.0, θʳᵉᶠ=1.0, cᵐ=1.0, α=0.000001)
-load = LoadCase(dim; ε̄₁₁=0.0, μ̄=1.0, ζ̄₁=0.1)
+load = LoadCase(dim; ε̄₁₁=0.0, μ̄=0.5, ζ̄₁=1.0)
 
 d = 0.2
 ϕ = 0.3 #packing fraction
@@ -18,7 +18,7 @@ rve = RVE(grid, P, M)
 
 # Δt ≥ L^2c / 20k # c: heat capacity, k: conductivity, L: mesh size
 
-res, setup = solve_time_series(rve, load; Δt=1e-3, t_total=1e-2)
+res, setup = solve_time_series(rve, load; Δt=1e-2, t_total=1e-1)
 
 #plot_grid(grid)
 

@@ -1,7 +1,7 @@
 """
     add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 
-Create a periodic boundary condition on `u` and `μ` unknown fields respectively on the `∂Ω` part of the boundary. `∂Ω` is defined by the collection of periodic facets from the `grid`. 
+Add a periodic boundary condition for the unknown fields respectively on the `∂Ω` part of the boundary. `∂Ω` is defined by the collection of periodic facets from the `grid`. 
 """
 function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 	(; ε̄, μ̄, ζ̄) = load
@@ -28,14 +28,10 @@ _get_ref_shape(::Val{3}) = RefTetrahedron
 """
     prepare_setup(rve::RVE{dim}) where {dim}
 
-Return a `RVESetup` struct for the elementweise assembly and time stepping. 
+Return a `RVESetup` struct for the element-wise assembly and time stepping. 
 	
 # Arguments:
--`rve::RVE{dim}`: An `RVE` object containing the following fields:
-
-- `grid`: 		The grid (mesh) for RVE.
-- `P`: 			Phase data for "particles" in the material.
-- `M`: 			Phase data for the "matrix" in the material.
+-[RVE](@ref "RVE{dim}")
 
 # Implementation Details:
 The interpolation `ip` is defined by passing the corresponding `refshape` using the function `_get_ref_shape(Val(dim))`. 
@@ -47,15 +43,17 @@ Cellvallues are created for each discrete fields respectively passing quadrature
 
 Number of base function for each unknown fields is defined using `getnbasefunctions`.
 
-Calling function `add_bc!` to initialize the boundary conditions and associate this to the dofhandler.
+Calling function `add_bc!` to initialize the boundary conditions and associate this to the ``Dofhandler``.
 
-Local stiffness and mass matrices are initialized. subarrays for locating the corresponding field interaction in elementweise by calling the macro `@view`.
+Local stiffness and mass matrices are initialized. subarrays for locating the corresponding field interaction in element-wise by calling the macro `@view`.
 
-A named tuple with the Struct `PhaseSetup` is then prepared for each `P` stands for particals and `M` for matrix.
+A ``NamedTuple`` with the `PhaseSetup`s is then prepared for particles `P` and  matrix `M`.
 
-Gloable stiffness, mass, and jacobian matrices is initialized using `allocate_matrix` for a sparse matrix pattern.
+Global stiffness, mass, and system matrices is initialized using `allocate_matrix` for a sparse matrix pattern.
 
-initialize the gloable residual vector and the solution vectors for both current and next time step.
+Initialize the gloable system vector and the solution vectors for both current and next time step.
+
+Get the total volume of the RVE.
 """
 function prepare_setup(rve::RVE{dim}) where {dim}
     @info "Preparing setup"

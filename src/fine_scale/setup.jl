@@ -1,23 +1,27 @@
 """
     add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 
-Create a periodic boundary condition on `u` and `μ` unknown fields respectively on the `∂Ω` part of the boundary. `∂Ω` is defined by the collection of periodic facets from the `grid`. 
+Add a periodic boundary condition for the unknown fields respectively on the `∂Ω` part of the boundary. `∂Ω` is defined by the collection of periodic facets from the `grid`. 
 """
 function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 	(; ε̄, μ̄, ζ̄) = load
-	∂Ω = vcat( collect_periodic_facets(grid, "left", "right"),
-               collect_periodic_facets(grid, "bottom", "top"),
-			   collect_periodic_facets(grid, "front", "back") )
-	add!(ch, PeriodicDirichlet(:μ, ∂Ω, (x,t) -> ζ̄⋅x))
-	add!(ch, PeriodicDirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x))
+	#∂Ω = vcat( collect_periodic_facets(grid, "left", "right"),
+    #           collect_periodic_facets(grid, "bottom", "top"),
+	#		   collect_periodic_facets(grid, "front", "back") )
+	#add!(ch, PeriodicDirichlet(:μ, ∂Ω, (x,t) -> ζ̄⋅x))
+	#add!(ch, PeriodicDirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x))
+	
+	∂Ω = union(getfacetset.([grid], ["left", "right", "bottom", "top", "back", "front"])...)
+	add!(ch, Dirichlet(:μ, ∂Ω, (x,t) -> μ̄ + ζ̄⋅x))
+	add!(ch, Dirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x))
 
-	centernode_idx = argmin((idx_node) -> norm(idx_node[2].x), enumerate(grid.nodes))[1]
+	#centernode_idx = argmin((idx_node) -> norm(idx_node[2].x), enumerate(grid.nodes))[1]
 
-	centernode = OrderedSet{Int}([centernode_idx])
+	#centernode = OrderedSet{Int}([centernode_idx])
 
 	#centernode =  OrderedSet{Int}([ argmin(n -> norm(n.x), grid.nodes) ])
-	add!(ch, Dirichlet(:u, centernode, (x,t) -> zero(Vec{3})))
-	add!(ch, Dirichlet(:μ, centernode, (x,t) -> μ̄))
+	#add!(ch, Dirichlet(:u, centernode, (x,t) -> zero(Vec{3})))
+	#add!(ch, Dirichlet(:μ, centernode, (x,t) -> μ̄))
 	return ch
 end
 
@@ -28,14 +32,10 @@ _get_ref_shape(::Val{3}) = RefTetrahedron
 """
     prepare_setup(rve::RVE{dim}) where {dim}
 
-Return a `RVESetup` struct for the elementweise assembly and time stepping. 
+Return a `RVESetup` struct for the element-wise assembly and time stepping. 
 	
 # Arguments:
--`rve::RVE{dim}`: An `RVE` object containing the following fields:
-
-- `grid`: 		The grid (mesh) for RVE.
-- `P`: 			Phase data for "particles" in the material.
-- `M`: 			Phase data for the "matrix" in the material.
+-[RVE](@ref "RVE{dim}")
 
 # Implementation Details:
 The interpolation `ip` is defined by passing the corresponding `refshape` using the function `_get_ref_shape(Val(dim))`. 
@@ -47,25 +47,28 @@ Cellvallues are created for each discrete fields respectively passing quadrature
 
 Number of base function for each unknown fields is defined using `getnbasefunctions`.
 
-Calling function `add_bc!` to initialize the boundary conditions and associate this to the dofhandler.
+Calling function `add_bc!` to initialize the boundary conditions and associate this to the ``Dofhandler``.
 
-Local stiffness and mass matrices are initialized. Submatrices for locating the corresponding field interaction in elementweise by calling the macro `@view`.
+Local stiffness and mass matrices are initialized. subarrays for locating the corresponding field interaction in element-wise by calling the macro `@view`.
 
-A named tuple with the Struct `PhaseSetup` is then prepared for each `P` stands for particals and `M` for matrix.
+A ``NamedTuple`` with the `PhaseSetup`s is then prepared for particles `P` and  matrix `M`.
 
-Gloable stiffness, mass, and jacobian matrices is initialized using `allocate_matrix` for a sparse matrix pattern.
+Global stiffness, mass, and system matrices is initialized using `allocate_matrix` for a sparse matrix pattern.
 
-initialize the gloable residual vector and the solution vectors for both current and next time step.
+Initialize the gloable system vector and the solution vectors for both current and next time step.
+
+Get the total volume of the RVE.
 """
 function prepare_setup(rve::RVE{dim}) where {dim}
-    (; grid, P, M) = rve
+    @info "Preparing setup"
+	(; grid, P, M) = rve
 	
 	P_material = P
 	M_material = M
 
 	
 	refshape   = _get_ref_shape(Val(dim))
-	setP, setM = getcellset(grid, "particles"), getcellset(grid, "matrix")
+	Ωᴾ, Ωᴹ = getcellset(grid, "particles"), getcellset(grid, "matrix")
 		
 	ip = (u = Lagrange{refshape,1}()^dim,
 	      μ = Lagrange{refshape,1}(),
@@ -91,7 +94,8 @@ function prepare_setup(rve::RVE{dim}) where {dim}
 
 	Kₑ = zeros(sum(nbf), sum(nbf))
 	Mₑ = deepcopy(Kₑ)
-	submatrices = (
+	fₑ = zeros(sum(nbf))
+	subarrays = (
 		Kₑuu = @view(Kₑ[dof_range(dh, :u), dof_range(dh, :u)]),
 		Kₑuμ = @view(Kₑ[dof_range(dh, :u), dof_range(dh, :μ)]),
 		Kₑμu = @view(Kₑ[dof_range(dh, :μ), dof_range(dh, :u)]),
@@ -110,24 +114,28 @@ function prepare_setup(rve::RVE{dim}) where {dim}
 		Mₑμc = @view(Mₑ[dof_range(dh, :μ), dof_range(dh, :c)]),
 		Mₑcμ = @view(Mₑ[dof_range(dh, :c), dof_range(dh, :μ)]),
 		Mₑcc = @view(Mₑ[dof_range(dh, :c), dof_range(dh, :c)]),
+		fₑu  = @view(fₑ[dof_range(dh, :u)]),
+		fₑμ  = @view(fₑ[dof_range(dh, :μ)]),
+		fₑc  = @view(fₑ[dof_range(dh, :c)]),
 	)
  
-	setups = (P = PhaseSetup{dim}(dh, setP, cv, nbf, P, Kₑ, Mₑ, submatrices), 
-	          M = PhaseSetup{dim}(dh, setM, cv, nbf, M, Kₑ, Mₑ, submatrices))
+	setups = (P = PhaseSetup{dim}(dh, Ωᴾ, cv, nbf, P, Kₑ, Mₑ, fₑ, subarrays), 
+	          M = PhaseSetup{dim}(dh, Ωᴹ, cv, nbf, M, Kₑ, Mₑ, fₑ, subarrays))
 
 	K = allocate_matrix(dh, ch)
-	M = allocate_matrix(dh, ch)
-	J = allocate_matrix(dh, ch)
-	g    = zeros(ndofs(dh))
-	aⁿ   = zeros(ndofs(dh))
-    aⁿ⁺¹ = zeros(ndofs(dh))
+	M = deepcopy(K)
+	J = deepcopy(K)
+	f = zeros(ndofs(dh))
+	g    = deepcopy(f)
+	aⁿ   = deepcopy(f)
+    aⁿ⁺¹ = deepcopy(f)
 
+	apply_analytical!(aⁿ, dh, :c, (x -> P_material.cʳᵉᶠ), Ωᴾ)
+	apply_analytical!(aⁿ, dh, :c, (x -> M_material.cʳᵉᶠ), Ωᴹ)
+	apply_analytical!(aⁿ, dh, :μ, (x -> P_material.μʳᵉᶠ), Ωᴾ)
+	apply_analytical!(aⁿ, dh, :μ, (x -> M_material.μʳᵉᶠ), Ωᴹ)
 	
-	apply_analytical!(aⁿ, dh, :c, (x -> P_material.cʳᵉᶠ), setP)
-	apply_analytical!(aⁿ, dh, :c, (x -> M_material.cʳᵉᶠ), setM)
-	apply_analytical!(aⁿ, dh, :μ, (x -> P_material.μʳᵉᶠ), setP)
-	apply_analytical!(aⁿ, dh, :μ, (x -> M_material.μʳᵉᶠ), setM)
-	
-
-	return RVESetup{dim}(grid, dh, setups, K, M, J, g, aⁿ, aⁿ⁺¹) 
+	setup = RVESetup{dim}(grid, dh, setups, K, M, f, J, g, aⁿ, aⁿ⁺¹) 
+	@info "Setup prepared"
+	return setup
 end

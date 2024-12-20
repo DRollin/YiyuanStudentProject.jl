@@ -9,7 +9,8 @@
 using YiyuanStudentProject
 #
 # ## Fine scale
-# Prepare for a 3d Representative Volume Element (RVE) problem. The material parameters are defined based on values from literatures. 
+# Setting up the dimension, material parameters, `loadcase` originated from macro scale for solving a 3D RVE problem. The material parameters are characterized using simple values
+# for the particle `P` and Matrix `M`. Parameters like the average particle diameter `d`, the particle volume fraction `ϕ`, and the `meshsize` are given followed.
 dim = 3
 
 P = Material{dim}(; G=4.0e5, K=6.67e5, η=1.0, cʳᵉᶠ=1.0, μʳᵉᶠ=1.0, θʳᵉᶠ=1.0, cᵐ=1.0, α=0.0001)
@@ -20,15 +21,15 @@ d = 0.1
 meshsize = 0.1
 #
 # Generate a grid with spherical inclusions for a 3D Representative Volume Element (RVE) in desired meshsize. 
-# Material phases like partical and matrix are included.
+# Material phases like partical and matrix are included as cell sets.
 grid = generate_rve_grid(; ϕ=ϕ, d=d, meshsize=meshsize, dx=(1.0,1.0, 1.0))
-# Construct a object struct as setups for solving the RVE problem.
+# Construct an object as setup for solving the RVE problem.
 rve = RVE(grid, P, M)
 setup = prepare_setup(rve)
-# Do assembly for constructing the system matrices K and M.
+# Perform the assembly for constructing the system matrices K and M.
 (; aⁿ, aⁿ⁺¹) = setup
 assemble_K_M!(setup)
-# Solve time dependent problem using implicit Crank-Nicolson Method.
+# Solve the time dependent problem applying the Crank-Nicolson Method.
 Δt=0.1
 setup, aⁿ⁺¹ = compute_time_step!(setup, load, Δt)
 

@@ -11,7 +11,6 @@ FerriteGmsh = "4f95f4f8-b27c-4ae5-9a39-ea55e634e36b"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
-LinearSolve = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
@@ -23,11 +22,10 @@ WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [compat]
 GLMakie = "0.10.16"
-LinearSolve = "2.38.0"
-Logging = "1.11.0"
-OrderedCollections = "1.6.3"
-ProgressLogging = "0.1.4"
-TerminalLoggers = "0.1.7"
+Logging = "1"
+OrderedCollections = "1.6"
+ProgressLogging = "0.1"
+TerminalLoggers = "0.1"
 julia = "1"
 
 [extras]

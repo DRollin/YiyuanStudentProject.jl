@@ -24,14 +24,14 @@ function assemble_K_M_f!(setup::RVESetup)
     assembler_Kf = start_assemble(K, f)
     assembler_M  = start_assemble(M)
     for phase in phasesetups
-        assemble_K_M_f!(assembler_Kf, assembler_M, K, phase)
+        assemble_K_M_f!(assembler_Kf, assembler_M, phase)
     end
     return K, M, f
 end
 
-function assemble_K_M_f!(assembler_Kf, assembler_M, K, setup::PhaseSetup{dim}) where {dim}
+function assemble_K_M_f!(assembler_Kf, assembler_M, setup::PhaseSetup{dim}) where {dim}
     (; dh, cells, cv, Kₑ, Mₑ, fₑ) = setup
-    @info "Assembling system"
+    @info "Assembling RVE system"
     for cc in CellIterator(dh, cells)
         reinit!(cv.u, cc)
         reinit!(cv.c, cc)
@@ -43,7 +43,7 @@ function assemble_K_M_f!(assembler_Kf, assembler_M, K, setup::PhaseSetup{dim}) w
         assemble!(assembler_Kf, celldofs(cc), Kₑ, fₑ)
         assemble!(assembler_M, celldofs(cc), Mₑ)
     end
-    @info "System assembled"
+    @info "RVE System assembled"
     return assembler_Kf, assembler_M
 end
 
@@ -90,7 +90,7 @@ function assemble_element!(setup::PhaseSetup)
    
     for qp in 1:getnquadpoints(cv.u)
         dΩ = getdetJdV(cv.u, qp)
-        μ = function_value(cv.μ, qp, aₑμ)
+        #μ = function_value(cv.μ, qp, aₑμ)
         for i in 1:nbf.u
             δNϵi = shape_symmetric_gradient(cv.u, qp, i)
             

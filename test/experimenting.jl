@@ -1,6 +1,6 @@
 using YiyuanStudentProject
 import GLMakie
-import LinearSolve, LinearSolvePardiso
+import LinearSolve #LinearSolvePardiso?
 
 dim = 3
 
@@ -11,12 +11,15 @@ load = LoadCase(dim; ε̄₁₁=0.01, μ̄=1.0, ζ̄₁=0.1)
 d = 0.2
 ϕ = 0.3 #packing fraction
 meshsize = 0.1
-grid = generate_rve_grid(; ϕ=ϕ, d=d, meshsize=meshsize, dx=(1.0,1.0, 1.0))
-rve = RVE(grid, P, M)
+grid_rve = generate_rve_grid(; ϕ=ϕ, d=d, meshsize=meshsize, dx=(1.0,1.0, 1.0))
+rve = RVE(grid_rve, P, M)
 
+grid_macro = generate_grid(Tetrahedron, (1,1,1) , Vec{3, Float64}((-0.5,-0.5,-0.5)), Vec{3, Float64}((0.5,0.5,0.5)))
 
-res, setup = solve_time_series(rve, load; Δt=1e-4, t_total=1e-3)
+setup_rve = prepare_setup(rve)
 
-#plot_grid(grid)
+assemble_K_M_f!(setup_rve)
 
-file, fig, anim = animate_result(res, setup, file_name="Myresult.mp4", n=10.0)
+res, setup = solve_macro_problem(grid_macro, setup_rve,  Δt=1e-4, t_total=1e-3)
+
+file, fig, anim = animate_macro_result(res, setup, file_name="Myresult.mp4", n=10.0)

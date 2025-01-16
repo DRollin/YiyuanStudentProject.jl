@@ -18,6 +18,7 @@ for the next time step solutions.
 
 """
 function compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) where{dim}
+    @info "Compute RVE time step"
     (; grid, dh, K, M, f, g, J, aⁿ, aⁿ⁺¹) = setup
     ch = ConstraintHandler(dh)
 	add_bc!(ch, grid, load)
@@ -28,6 +29,8 @@ function compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) wher
     apply!(J, g, ch) 
     aⁿ⁺¹ .= J \ g
     apply!(aⁿ⁺¹, ch) 
+    
+    @info "RVE time step computed"
     return setup, aⁿ⁺¹
 end
 
@@ -35,6 +38,7 @@ end
 """
     solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.25, t_total=1) where {dim}
 
+For visualizing the fine scale problem results.
 Compute the results in a `NamedTuple` with fields `t` total time and `a` solution vector series contain `u` displacement, `μ` chemical potantial, 
 and `c` concentration for the whole time series with a certain time step width. 
 

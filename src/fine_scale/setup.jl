@@ -60,7 +60,7 @@ Initialize the gloable system vector and the solution vectors for both current a
 Get the total volume of the RVE.
 """
 function prepare_setup(rve::RVE{dim}) where {dim}
-    @info "Preparing setup"
+    @info "Preparing RVE setup"
 	(; grid, P, M) = rve
 	
 	P_material = P
@@ -134,8 +134,9 @@ function prepare_setup(rve::RVE{dim}) where {dim}
 	apply_analytical!(aⁿ, dh, :c, (x -> M_material.cʳᵉᶠ), Ωᴹ)
 	apply_analytical!(aⁿ, dh, :μ, (x -> P_material.μʳᵉᶠ), Ωᴾ)
 	apply_analytical!(aⁿ, dh, :μ, (x -> M_material.μʳᵉᶠ), Ωᴹ)
+
 	
 	setup = RVESetup{dim}(grid, dh, setups, K, M, f, J, g, aⁿ, aⁿ⁺¹) 
-	@info "Setup prepared"
+	@info "RVE Setup prepared"
 	return setup
 end

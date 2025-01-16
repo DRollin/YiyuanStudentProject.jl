@@ -130,14 +130,44 @@ A `PhaseSetup` contains the relevant imformation for the solving the transient p
 struct RVESetup{dim}
 	grid::Grid{dim}
 	dh::DofHandler{dim}
-	#ch::ConstraintHandler -> Wee need to be able to change the constraints...
-    #sets::NamedTuple{(:P,:M),Tuple{Set{Int64},Set{Int64}}}
     phasesetups::NamedTuple{(:P,:M),Tuple{PhaseSetup{dim},PhaseSetup{dim}}}
     K::SparseMatrixCSC{Float64, Int64}
     M::SparseMatrixCSC{Float64, Int64}
     f::Vector{Float64}
-    J:: SparseMatrixCSC{Float64, Int64}
-    g:: Vector{Float64}
+    J::SparseMatrixCSC{Float64, Int64}
+    g::Vector{Float64}
     aⁿ::Vector{Float64}
     aⁿ⁺¹::Vector{Float64}
+end
+
+
+
+mutable struct GaussPointPhaseData{dim}
+    c::Float64
+    c₂::Tensor{1,dim,Float64}
+end
+
+mutable struct GaussPointData{dim}
+    aⁿ_rve::Vector{Float64}
+    phasedata:: NamedTuple{(:P,:M),Tuple{GaussPointPhaseData{dim},GaussPointPhaseData{dim}}}
+end
+
+
+mutable struct AssemblySetup{dim}
+    dh::DofHandler
+    cv::NamedTuple{(:u,:μ),NTuple{2,CellValues}}
+    nbf::NamedTuple{(:u,:μ),NTuple{2,Int}}
+    Kₑ::Matrix{Float64}
+    subarrays::NamedTuple
+    data::Vector{Vector{GaussPointData{dim}}}
+end
+
+
+mutable struct SolveSetup{dim}
+	grid::Grid{dim}
+	dh::DofHandler{dim}
+    Assemblysetup::AssemblySetup{dim}
+    K::SparseMatrixCSC{Float64, Int64}
+    f::Vector{Float64}
+    aⁿ::Vector{Float64}
 end

@@ -135,34 +135,3 @@ In order to solve for $\boldsymbol a^\text{n+1}$ the jacobian matrix $\boldsymbo
 \end{align}
 ```
 where the initial state of all unknown fields for all elements in $\Omega$ are choosen as $c_0 = c_{ref}, \mu_0 = \mu_{ref}, u_0 = 0$.
-
-## Time stepping
-
-As the transit problem is discussed here, one of the crucial part is to solve the time derivative term $\int_{\Omega} \dot{c} \ \delta \mu \ d\Omega$ in the FE context. Due to the linearity of the problem a direct derivation of the element stiffness $K_e$ and mass matrix $M_e$ is possible. 
-
-The whole PDE system can be discretized using an implicit Crank-Nicolson scheme:
-```math
-\begin{align}
-u(t^{n+1}) &\approx u(t^{n}) + \frac{1}{2} \Delta t (\dot u(t^{n})+\dot u(t^{n+1}))
-\end{align}
-```
-so that the linear system can be discretized as following:
-```math
-\begin{align}
-M \dot a + K a^{n} &= M (\frac{a^{n+1}-a^{n}}{\Delta t}) + K a^{n}
-\\
-Ma^{n+1} &= -\Delta t K a^{n} + Ma^{n}
-\\
-Ma^{n+1} + \frac{1}{2}\Delta t K a^{n+1} &= -\frac{1}{2}\Delta t K a^{n} + Ma^{n}
-\\
-Ja^{n+1} &= g
-\end{align}
-```
-In order to solve for $a^{n+1}$ the jacobian matrix J and the residual vector g are computed using the gloable stiffness matrix K and mass matrix M as well as $a^{n}$ for g.
-```math
-\begin{align}
-J &= M + \frac{1}{2}\Delta t K
-\\
-g &= (M -\frac{1}{2}\Delta t K)a^{n}
-\end{align}
-```

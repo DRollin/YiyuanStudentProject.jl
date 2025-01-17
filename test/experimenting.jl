@@ -1,6 +1,6 @@
 using YiyuanStudentProject
 import GLMakie
-
+#import LinearSolve #LinearSolvePardiso?
 
 dim = 3
 
@@ -22,4 +22,5 @@ assemble_K_M_f!(setup_rve)
 
 res, setup = solve_macro_problem(grid_macro, setup_rve,  Δt=1e-4, t_total=1e-3)
 
-#file, fig, anim = animate_macro_result(res, setup, file_name="Myresult.mp4", n=10.0)
+#file, fig, anim = animate_macro_result(res, setup, file_name="Myresult.mp4", scale=10.0)
+file, fig, anim = animate_combined_result(res, setup, file_name="Myresult.mp4", scale=10.0)

@@ -6,8 +6,8 @@ function add_macro_bc!(ch::ConstraintHandler, grid::Grid{3}, Δt)
 	∂Ωₗ = getfacetset(grid, "left") 
     ∂Ωᵣ = getfacetset(grid, "right")
 	ramp(t) = t < 10*Δt ? t/(10*Δt) : 1.0
-    add!(ch, Dirichlet(:u, ∂Ωₗ, (x,t) -> (ramp(t)*1.0, 0.0, 0.0) ))
-    add!(ch, Dirichlet(:u, ∂Ωᵣ, (x,t) -> (0.0, 0.0, 0.0)))
+    add!(ch, Dirichlet(:u, ∂Ωₗ, (x,t) -> ramp(t)*Vec{3}((1.0, 0.0, 0.0)) ))
+    add!(ch, Dirichlet(:u, ∂Ωᵣ, (x,t) -> Vec{3}((0.0, 0.0, 0.0)) ))
     add!(ch, Dirichlet(:μ, ∂Ωₗ, (x,t) -> ramp(t)*1.0))
     add!(ch, Dirichlet(:μ, ∂Ωᵣ, (x,t) -> 0.0)) 
 	return ch
@@ -59,16 +59,12 @@ function prepare_macro_setup(grid::Grid{dim}, rvesetup::RVESetup{dim}, Δt) wher
 	aⁿ = deepcopy(f)
 
 	
-    data = [[ GaussPointData(rvesetup.aⁿ,
-							 (P = GaussPointPhaseData(0.0, zero(Tensor{1,dim})),
-							  M = GaussPointPhaseData(0.0, zero(Tensor{1,dim})))
-							 )
+    data = [[ GaussPointData(rvesetup.aⁿ, 0.0,zero(Tensor{1,dim}))
                 for j in 1:getnquadpoints(cv.u)]
                 for i in 1:length(grid.cells)]
 
-    setups = AssemblySetup{dim}(dh, cv, nbf, Kₑ, subarrays, data, aₑ)
-
-    setup = SolveSetup{dim}(grid, dh, ch, setups, K, f, aⁿ) 
+    assemblysetup = AssemblySetup{dim}(dh, cv, nbf, Kₑ, aₑ, subarrays, data, rvesetup)
+    setup = SolveSetup{dim}(grid, dh, ch, assemblysetup, K, f, aⁿ) 
 
 	@info "Macro setup prepared"
 	return setup

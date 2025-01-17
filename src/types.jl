@@ -140,33 +140,28 @@ struct RVESetup{dim}
     aⁿ⁺¹::Vector{Float64}
 end
 
-
-
-mutable struct GaussPointPhaseData{dim}
-    c::Float64
-    c₂::Tensor{1,dim,Float64}
-end
-
 mutable struct GaussPointData{dim}
-    aⁿ_rve::Vector{Float64}
-    phasedata:: NamedTuple{(:P,:M),Tuple{GaussPointPhaseData{dim},GaussPointPhaseData{dim}}}
+    aᵣᵥₑⁿ::Vector{Float64}
+    c̄ⁿ::Float64
+    c̄₂ⁿ::Tensor{1,dim,Float64}
 end
 
-
-mutable struct AssemblySetup{dim}
+struct AssemblySetup{dim}
     dh::DofHandler
     cv::NamedTuple{(:u,:μ),NTuple{2,CellValues}}
     nbf::NamedTuple{(:u,:μ),NTuple{2,Int}}
     Kₑ::Matrix{Float64}
+    aₑ::Vector{Float64}
     subarrays::NamedTuple
-    data::Vector{Vector{GaussPointData{dim}}}
+    gpdata::Vector{Vector{GaussPointData{dim}}}
+    rvesetup::RVESetup{dim}
 end
 
-
-mutable struct SolveSetup{dim}
+struct SolveSetup{dim}
 	grid::Grid{dim}
 	dh::DofHandler{dim}
-    Assemblysetup::AssemblySetup{dim}
+    ch::ConstraintHandler
+    assemblysetup::AssemblySetup{dim}
     K::SparseMatrixCSC{Float64, Int64}
     f::Vector{Float64}
     aⁿ::Vector{Float64}

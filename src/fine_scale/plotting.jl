@@ -1,22 +1,22 @@
 
-function convert_cells(::Grid, cells::Vector{Tetrahedron})
+function _convert_cells(::Grid, cells::Vector{Tetrahedron})
     return [ GeometryBasics.TriangleFace{Int}(facet...) for cell in cells for facet in Ferrite.facets(cell) ]
 end
-convert_cells(grid::Grid, set::OrderedSet{Int}) = convert_cells(grid, getcells(grid, collect(set)))
-convert_cells(grid::Grid, set::String) = convert_cells(grid, getcells(grid, set))
+_convert_cells(grid::Grid, set::OrderedSet{Int}) = _convert_cells(grid, getcells(grid, collect(set)))
+_convert_cells(grid::Grid, set::String) = _convert_cells(grid, getcells(grid, set))
 
-function prepare_plotable_mesh(grid::Grid{dim}, set) where {dim}
+function _prepare_plotable_mesh(grid::Grid{dim}, set) where {dim}
     nodes = [ GeometryBasics.Point{dim,Float64}(n.x...) for n in grid.nodes ]
-    cells = convert_cells(grid, set)
+    cells = _convert_cells(grid, set)
     return GeometryBasics.Mesh(nodes, cells)
 end
-function prepare_plotable_mesh(grid::Grid{dim}, displ::Vector{<:Vec{dim}}, set) where {dim}
+function _prepare_plotable_mesh(grid::Grid{dim}, displ::Vector{<:Vec{dim}}, set) where {dim}
     nodes = [ GeometryBasics.Point{dim,Float64}( (n.x .+ u)...) for (n, u) in zip(grid.nodes, displ) ]
-    cells = convert_cells(grid, set)
+    cells = _convert_cells(grid, set)
     return GeometryBasics.Mesh(nodes, cells)
 end
-prepare_plotable_mesh(grid::Grid) = prepare_plotable_mesh(grid, grid.cells)
-prepare_plotable_mesh(grid::Grid{dim}, u::Vector{<:Vec{dim}}) where {dim} = prepare_plotable_mesh(grid, u, grid.cells)
+_prepare_plotable_mesh(grid::Grid) = _prepare_plotable_mesh(grid, grid.cells)
+_prepare_plotable_mesh(grid::Grid{dim}, u::Vector{<:Vec{dim}}) where {dim} = _prepare_plotable_mesh(grid, u, grid.cells)
 
 """
     plot_grid(grid::Grid{3})
@@ -28,7 +28,7 @@ Ruturn a Makie.Figure to visualize a 3D finite element grid using the Makie plot
 
 
 # Implementation Details:
-A plotable mesh is generated using `prepare_plotable_mesh` and input `grid`
+A plotable mesh is generated using `_prepare_plotable_mesh` and input `grid`
 
 Sets up a 3D axis (`Axis3`) with an equal aspect ratio and a title `undeformed grid`.
 
@@ -38,7 +38,7 @@ Overlays the grid's edges as a wireframe (`Makie.wireframe!`) with black edges.
 
 """
 function plot_grid(grid::Grid{3})
-    mesh = prepare_plotable_mesh(grid)
+    mesh = _prepare_plotable_mesh(grid)
     fig = Makie.Figure()
     ax  = Makie.Axis3(fig[1, 1], aspect = :equal, title = "undeformed grid")
     Makie.mesh!(ax, mesh; color=Makie.RGB(0.5,0.5,1.0))
@@ -59,23 +59,39 @@ Return an animation showing the evolution of the solution for a 3D RVE simulatio
 - `n`:           Scaling factor for displacement
 
 # Implementation Details:
-A plotable mesh is generated using `prepare_plotable_mesh` with a cut open to show the inner structure.
+A plotable mesh is generated using `_prepare_plotable_mesh` with a cut open to show the inner structure.
 
 A Figure is plotted showing the results of for displacement `u`, chemical potantial `μ`, concentration`c` at each time step.
     
 """
-function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myresult.mp4", n=1.0) where {dim}
-    (; grid, dh) = setup
+function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myresult.mp4", kwargs...) where {dim}
+    (; t, a) = res
+
+    fig = Makie.Figure(size=(1200,800))
+    tᵒᵇˢ, aᵒᵇˢ = _prepare_plots!(fig, res, setup; kwargs...)
+
+	file = joinpath(file_name)
+    #file = joinpath(tempdir(), "Myresult.mp4")
+	anim = Makie.record(fig, file, eachindex(t); framerate=1) do i
+        tᵒᵇˢ[] = t[i]
+        aᵒᵇˢ[] = a[i]
+	end
+
+	return file, fig, anim
+end
+
+function _prepare_plots!(pos, res::NamedTuple, setup::RVESetup{dim};
+        scale::Real=1.0, 
+        titlestart::String="RVE response") where {dim}
     # TODO: List of ideas
-    # - Maybe introduce a scaling factor for the displacement?
     # - Find a better (larger) size for the Figure
     # - Find initial color ranges which are adapted to the applied loading or the overall max/min?
     # - Improve ticks if necessary to match RVE bounds
+    (; grid, dh) = setup
+    (; a, t) = res
 
-    
-    μ_all = [evaluate_at_grid_nodes(dh, res.a[i], :μ) for i in eachindex(res.t)]
-    c_all = [evaluate_at_grid_nodes(dh, res.a[i], :c) for i in eachindex(res.t)]
- 
+    μ_all = [evaluate_at_grid_nodes(dh, a[i], :μ) for i in eachindex(t)]
+    c_all = [evaluate_at_grid_nodes(dh, a[i], :c) for i in eachindex(t)]
     μ_min, μ_max = minimum(μ -> minimum(μ), μ_all), maximum(μ -> maximum(μ), μ_all)
     c_min, c_max = minimum(c -> minimum(c), c_all), maximum(c -> maximum(c), c_all)
      
@@ -89,57 +105,43 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myres
     cellsᴾ = setdiff(cells, getcellset(grid, "matrix"))
     cellsᴹ = setdiff(cells, getcellset(grid, "particles"))
 
-    mesh = prepare_plotable_mesh(grid, cells)
-    meshᴾ = prepare_plotable_mesh(grid, cellsᴾ)
-    meshᴹ = prepare_plotable_mesh(grid, cellsᴹ)
-    fig = Makie.Figure(size=(1200,800))
-
-
-    t = res.t[1]
-    tᵒᵇˢ = Makie.Observable(t)
-    title = Makie.@lift "solution at t=$( round($(tᵒᵇˢ); sigdigits=4) )"
-    Makie.Label(fig[1,1:2], title)
-
+    mesh  = _prepare_plotable_mesh(grid, cells)
+    meshᴾ = _prepare_plotable_mesh(grid, cellsᴾ)
+    meshᴹ = _prepare_plotable_mesh(grid, cellsᴹ)
     
-    ax  = Makie.Axis3(fig[2,1], aspect=:equal, title="undeformed grid")
+    tᵒᵇˢ = Makie.Observable(t[1])
+    aᵒᵇˢ = Makie.Observable(a[1])
+
+    title = Makie.@lift titlestart*" at t=$( round($(tᵒᵇˢ); sigdigits=4) )"
+    Makie.Label(pos[1,1:2], title)
+
+    ax  = Makie.Axis3(pos[2,1], aspect=:equal, title="undeformed grid")
     Makie.mesh!(ax, meshᴾ; color=Makie.RGB(1.0,0.5,0.5), shading=Makie.NoShading)
     Makie.mesh!(ax, meshᴹ; color=Makie.RGB(0.5,0.5,1.0), shading=Makie.NoShading)
     Makie.wireframe!(ax, mesh; color=:black)
     
-    u = evaluate_at_grid_nodes(dh, res.a[1], :u)
-    uᵒᵇˢ = Makie.Observable(u)
-    defmeshᴾ = Makie.@lift prepare_plotable_mesh(grid, ( $(uᵒᵇˢ) .* n ), cellsᴾ)
-    defmeshᴹ = Makie.@lift prepare_plotable_mesh(grid, ( $(uᵒᵇˢ) .* n ), cellsᴹ)
-    ax = Makie.Axis3(fig[2,2], aspect=:equal, title="deformed grid")
+    u = Makie.@lift evaluate_at_grid_nodes(dh, $(aᵒᵇˢ), :u)
+    defmeshᴾ = Makie.@lift _prepare_plotable_mesh(grid, ( $(u) .* scale ), cellsᴾ)
+    defmeshᴹ = Makie.@lift _prepare_plotable_mesh(grid, ( $(u) .* scale ), cellsᴹ)
+    ax = Makie.Axis3(pos[2,2], aspect=:equal, title="deformed grid")
     Makie.mesh!(ax, defmeshᴾ; color=Makie.RGB(1.0,0.5,0.5), shading=Makie.NoShading)
     Makie.mesh!(ax, defmeshᴹ; color=Makie.RGB(0.5,0.5,1.0), shading=Makie.NoShading)
     Makie.wireframe!(ax, defmeshᴾ; color=:black)
     Makie.wireframe!(ax, defmeshᴹ; color=:black)
 
-    pos = fig[3,1]
-    μ = evaluate_at_grid_nodes(dh, res.a[1], :μ)
-    μᵒᵇˢ = Makie.Observable(μ)
-    ax = Makie.Axis3(pos[1,1], aspect=:equal, title="chemical potential")
-    colorrange = (μ_min, μ_max)
-    Makie.mesh!(ax, mesh; color=μᵒᵇˢ, colormap=:viridis, colorrange=colorrange, shading=Makie.NoShading)
-    Makie.Colorbar(pos[1,2]; colormap=:viridis, colorrange=colorrange)
+    subpos = pos[3,1]
+    μ = Makie.@lift evaluate_at_grid_nodes(dh, $(aᵒᵇˢ), :μ)
+    ax = Makie.Axis3(subpos[1,1], aspect=:equal, title="chemical potential")
+    colorsettings = (colorrange=(μ_min, μ_max), colormap=:viridis)
+    Makie.mesh!(ax, mesh; color=μ, colorsettings..., shading=Makie.NoShading)
+    Makie.Colorbar(subpos[1,2]; colorsettings...)
    
-    pos = fig[3,2]
-    c = evaluate_at_grid_nodes(dh, res.a[1], :c)
-    cᵒᵇˢ = Makie.Observable(c)
-    ax = Makie.Axis3(pos[1,1], aspect=:equal, title="concentration")
-    colorrange = (c_min, c_max)
-    Makie.mesh!(ax, mesh; color=cᵒᵇˢ, colormap=:viridis, colorrange=colorrange, shading=Makie.NoShading)
-    Makie.Colorbar(pos[1,2]; colormap=:viridis, colorrange=colorrange)    
+    subpos = pos[3,2]
+    c = Makie.@lift evaluate_at_grid_nodes(dh, $(aᵒᵇˢ), :c)
+    ax = Makie.Axis3(subpos[1,1], aspect=:equal, title="concentration")
+    colorsettings = (colorrange=(c_min, c_max), colormap=:viridis)
+    Makie.mesh!(ax, mesh; color=c, colorsettings..., shading=Makie.NoShading)
+    Makie.Colorbar(subpos[1,2]; colorsettings...)
 
-	file = joinpath(file_name)
-    #file = joinpath(tempdir(), "Myresult.mp4")
-	anim = Makie.record(fig, file, eachindex(res.t); framerate=1) do i
-        tᵒᵇˢ[] = res.t[i]
-        uᵒᵇˢ[] = evaluate_at_grid_nodes(dh, res.a[i], :u)
-        μᵒᵇˢ[] = evaluate_at_grid_nodes(dh, res.a[i], :μ)
-        cᵒᵇˢ[] = evaluate_at_grid_nodes(dh, res.a[i], :c)
-	end
-
-	return file, fig, anim
+    return tᵒᵇˢ, aᵒᵇˢ
 end

@@ -65,6 +65,6 @@ include("macro_scale/solve.jl")
 export solve_macro_problem
 
 include("macro_scale/plotting.jl")
-export animate_macro_result
+export animate_macro_result, animate_combined_result
 
 end

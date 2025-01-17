@@ -1,33 +1,28 @@
 
-function assemble_macro_K!(setup::SolveSetup, problem::RVESetup, Δt) where {dim}
-    (; Assemblysetup, K) = setup
-    (; data) = Assemblysetup
+function assemble_macro_K!(setup::SolveSetup{dim}, Δt) where {dim}
+    (; assemblysetup, K, aⁿ) = setup
     assembler = start_assemble(K)
-    
-    assemble_macro_K!(assembler, Assemblysetup, problem, Δt)
-    
-    return K, data
+    assemble_macro_K!(assembler, assemblysetup, aⁿ, Δt)
+    return setup
 end
 
-
-function assemble_macro_K!(assembler, setup::AssemblySetup{dim}, problem::RVESetup, Δt) where {dim}
-    (; dh, cv, Kₑ) = setup
+function assemble_macro_K!(assembler, setup::AssemblySetup{dim}, aⁿ, Δt) where {dim}
+    (; dh, cv, Kₑ, aₑ, gpdata) = setup
     @info "Assembling macro system"
     for cc in CellIterator(dh)
         reinit!(cv.u, cc)
         reinit!(cv.μ, cc)
         fill!(Kₑ, 0)
-        aₑ .= aₙ[celldofs(cc)]
-        assemble_macro_element!(setup, problem, Δt, cellid(cc))
+        aₑ .= aⁿ[celldofs(cc)]
+        assemble_macro_element!(setup, Δt, gpdata[cellid(cc)])
         assemble!(assembler, celldofs(cc), Kₑ)
     end
     @info "Macro System assembled"
     return assembler
 end
 
-
-function assemble_macro_element!(setup::AssemblySetup{dim}, problem::RVESetup, Δt, cellid) where {dim}
-    (; cv, nbf, Kₑ, subarrays, data) = setup
+function assemble_macro_element!(setup::AssemblySetup{dim}, Δt, gpdata::Vector{GaussPointData{dim}}) where {dim}
+    (; cv, nbf, Kₑ, subarrays, rvesetup) = setup
     (; Kₑuu, Kₑμμ, μₑ, uₑ) = subarrays
     
     for qp in 1:getnquadpoints(cv.u)
@@ -39,14 +34,11 @@ function assemble_macro_element!(setup::AssemblySetup{dim}, problem::RVESetup, �
 
         load = LoadCase{dim}(ε̄, μ̄, ζ̄)
 
-       
-        σ̄, c̄̇, c̄̇₂, j̄, dataₙ₊₁ = compute_effective_response(problem, load, data[cellid][qp], Δt)
-
+        σ̄, ċ, ċ₂, j̄ = compute_effective_response!(gpdata[qp], rvesetup, load, Δt)
 
         for i in 1:nbf.u
             δNϵi = shape_gradient(cv.u, qp, i)
             for j in 1:nbf.u
-                Nϵj = shape_value(cv.u, qp, j)  #??
                 Kₑuu[i,j] += (δNϵi ⊡ σ̄  ) * dΩ
             end
         end
@@ -54,12 +46,8 @@ function assemble_macro_element!(setup::AssemblySetup{dim}, problem::RVESetup, �
         for i in 1:nbf.μ
             δN∇μi = shape_gradient(cv.μ, qp, i)
             δNμi = shape_value(cv.μ, qp, i)
-
             for j in 1:nbf.μ
-                N∇μj = shape_gradient(cv.μ, qp, j)#??
-                Nμj = shape_value(cv.μ, qp, j)
-
-                Kₑμμ[i,j] += (δNμi * c̄̇   -  δN∇μi ⋅ (c̄̇₂ - j̄) ) * dΩ
+                Kₑμμ[i,j] += (δNμi * ċ - δN∇μi ⋅ (ċ₂ - j̄) ) * dΩ
             end
         end
     end

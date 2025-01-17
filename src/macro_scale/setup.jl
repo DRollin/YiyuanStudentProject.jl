@@ -1,15 +1,22 @@
+"""
+TODO
+
+"""
 function add_macro_bc!(ch::ConstraintHandler, grid::Grid{3}, Δt)
 	∂Ωₗ = getfacetset(grid, "left") 
     ∂Ωᵣ = getfacetset(grid, "right")
 	ramp(t) = t < 10*Δt ? t/(10*Δt) : 1.0
-    add!(ch, Dirichlet(:u, ∂Ωₗ, (x,t) -> ramp(t)*(1.0, 0.0, 0.0) ))
+    add!(ch, Dirichlet(:u, ∂Ωₗ, (x,t) -> (ramp(t)*1.0, 0.0, 0.0) ))
     add!(ch, Dirichlet(:u, ∂Ωᵣ, (x,t) -> (0.0, 0.0, 0.0)))
-    add!(ch, Dirichlet(:μ, ∂Ωₗ, (x,t) -> 1.0))
+    add!(ch, Dirichlet(:μ, ∂Ωₗ, (x,t) -> ramp(t)*1.0))
     add!(ch, Dirichlet(:μ, ∂Ωᵣ, (x,t) -> 0.0)) 
 	return ch
 end
 
+"""
+TODO
 
+"""
 function prepare_macro_setup(grid::Grid{dim}, rvesetup::RVESetup{dim}, Δt) where {dim}
 	@info "Preparing Macro setup"
     refshape   = _get_ref_shape(Val(dim))
@@ -44,8 +51,6 @@ function prepare_macro_setup(grid::Grid{dim}, rvesetup::RVESetup{dim}, Δt) wher
 		Kₑuμ = @view(Kₑ[dof_range(dh, :u), dof_range(dh, :μ)]),
 		Kₑμu = @view(Kₑ[dof_range(dh, :μ), dof_range(dh, :u)]),
 		Kₑμμ = @view(Kₑ[dof_range(dh, :μ), dof_range(dh, :μ)]),
-        μₑ = @view(aₑ[dof_range(dh, :μ)]),
-        uₑ = @view(aₑ[dof_range(dh, :u)]),
 	)
 
 
@@ -61,9 +66,9 @@ function prepare_macro_setup(grid::Grid{dim}, rvesetup::RVESetup{dim}, Δt) wher
                 for j in 1:getnquadpoints(cv.u)]
                 for i in 1:length(grid.cells)]
 
-    setups = AssemblySetup{dim}(dh, cv, nbf, Kₑ, subarrays, data)
+    setups = AssemblySetup{dim}(dh, cv, nbf, Kₑ, subarrays, data, aₑ)
 
-    setup = SolveSetup{dim}(grid, dh, setups, K, f, aⁿ) 
+    setup = SolveSetup{dim}(grid, dh, ch, setups, K, f, aⁿ) 
 
 	@info "Macro setup prepared"
 	return setup

@@ -4,9 +4,9 @@
 Compute the solution for the next time step in a Representative Volume Element (RVE) simulation using an implicit time integration scheme.
 
 # Arguments
-- `setup::RVESetup{dim}`:   The setup object containing parameters for the RVE simulation
-- `load::LoadCase{dim}`:    The load case specifying boundary conditions and external loads for the current time step.
-- `Δt::Real`:               The time step size.
+- `setup`:   RVESetup{dim}: The setup object containing parameters for the RVE simulation
+- `load`:    LoadCase{dim}: The load case specifying boundary conditions and external loads for the current time step.
+- `Δt`:      The time step size.
 
 
 # Implementation Details
@@ -25,7 +25,7 @@ function compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) wher
 	close!(ch)
         # .nzval assures that structural zeros are NOT dropped (-> needed to apply constraints)
     g .= Δt .* f .+ (M .- K .* Δt ./ 2) * aⁿ
-    J.nzval .= (M.nzval .+ K.nzval .* Δt ./ 2 .+ 1e-10)
+    J.nzval .= M.nzval .+ K.nzval .* Δt ./ 2 #.+ 1e-10)
     apply!(J, g, ch) 
     aⁿ⁺¹ .= J \ g
     apply!(aⁿ⁺¹, ch) 
@@ -44,7 +44,7 @@ and `c` concentration for the whole time series with a certain time step width.
 
 # Arguments
 - `rve`:    Object for solving function `prepare_setup`,
-- `load`:   Object `LoadCase` with a 
+- `load`:   Object `LoadCase`.
 
 """
 function solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.1, t_total=1) where {dim}

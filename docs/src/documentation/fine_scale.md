@@ -97,12 +97,12 @@ So that the simplified constitutive equations are:
 \int_{\Omega} (\boldsymbol \mu - \boldsymbol \mu^\text{en}(\boldsymbol \varepsilon[u], \boldsymbol c)) \delta \boldsymbol c \ d\Omega
 &= 0
 &\
-\forall \delta \boldsymbol \mu \in \mathbb{C}^{0}
+\forall \delta \boldsymbol c \in \mathbb{C}^{0}
 \end{align}
 ```
 where the initial state of all unknown fields for all elements in $\Omega$ are choosen based on the consistent reference state as mentioned earlier $\boldsymbol c_0 = \boldsymbol c_\text{ref}, \boldsymbol \mu_0 = \boldsymbol \mu_\text{ref}, \boldsymbol u_0 = 0$.
 
-## Time stepping
+## Time Stepping
 
 As the transit problem is discussed here, one of the crucial part is to solve the time derivative term $\int_{\Omega} \dot{\boldsymbol c} \ \delta \boldsymbol \mu \ d\Omega$ in the FE context. Due to the linearity of the problem a direct derivation of the element stiffness $\boldsymbol K_e$, the mass matrix $\boldsymbol M_e$, and the right hand side vector  $\boldsymbol f_e$ is possible. The constraint matrix $\boldsymbol C_e$ for $\langle \boldsymbol \mu\rangle _{\square} = \bar{\boldsymbol \mu}$ is merged into the last row and colum of $\boldsymbol K_e$. 
 

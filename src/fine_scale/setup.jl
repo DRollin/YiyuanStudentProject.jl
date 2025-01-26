@@ -1,15 +1,10 @@
 """
     add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 
-Add a periodic boundary condition for the unknown fields respectively on the `∂Ω` part of the boundary. `∂Ω` is defined by the collection of periodic facets from the `grid`. 
+Add a dirichlet boundary condition for the unknown fields respectively on the `∂Ω` part of the boundary. `∂Ω` is defined by the collection of periodic facets from the `grid`. 
 """
 function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 	(; ε̄, μ̄, ζ̄) = load
-	#∂Ω = vcat( collect_periodic_facets(grid, "left", "right"),
-    #           collect_periodic_facets(grid, "bottom", "top"),
-	#		   collect_periodic_facets(grid, "front", "back") )
-	#add!(ch, PeriodicDirichlet(:μ, ∂Ω, (x,t) -> ζ̄⋅x))
-	#add!(ch, PeriodicDirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x))
 	
 	∂Ω = union(getfacetset.([grid], ["left", "right", "bottom", "top", "back", "front"])...)
 	add!(ch, Dirichlet(:μ, ∂Ω, (x,t) -> μ̄ + ζ̄⋅x))
@@ -29,13 +24,25 @@ _get_ref_shape(::Val{1}) = RefLine
 _get_ref_shape(::Val{2}) = RefTriangle
 _get_ref_shape(::Val{3}) = RefTetrahedron
 
+function get_volume(grid, cellvalues)
+    V  = 0.0 
+    for c in CellIterator(grid)
+        reinit!(cellvalues, c)
+        for qp in 1:getnquadpoints(cellvalues)
+            dΩ = getdetJdV(cellvalues, qp)
+            V += dΩ
+        end
+    end
+    return V
+end
+
 """
     prepare_setup(rve::RVE{dim}) where {dim}
 
 Return a `RVESetup` struct for the element-wise assembly and time stepping. 
 	
 # Arguments:
--[RVE](@ref "RVE{dim}")
+-rve:	[RVE](@ref "RVE{dim}")
 
 # Implementation Details:
 The interpolation `ip` is defined by passing the corresponding `refshape` using the function `_get_ref_shape(Val(dim))`. 
@@ -135,8 +142,10 @@ function prepare_setup(rve::RVE{dim}) where {dim}
 	apply_analytical!(aⁿ, dh, :μ, (x -> P_material.μʳᵉᶠ), Ωᴾ)
 	apply_analytical!(aⁿ, dh, :μ, (x -> M_material.μʳᵉᶠ), Ωᴹ)
 
-	
-	setup = RVESetup{dim}(grid, dh, setups, K, M, f, J, g, aⁿ, aⁿ⁺¹) 
+	Vʳᵛᵉ = get_volume(grid, cv.u)
+	setup = RVESetup{dim}(grid, dh, setups, K, M, f, J, g, aⁿ, aⁿ⁺¹, Vʳᵛᵉ) 
 	@info "RVE Setup prepared"
 	return setup
 end
+
+

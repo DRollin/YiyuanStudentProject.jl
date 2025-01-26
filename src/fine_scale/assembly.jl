@@ -50,7 +50,7 @@ end
 """
         assemble_element!(setup::PhaseSetup)
 
-Return the assembled mass matrix for coupling between the chemical potantial and the concentration fields.
+Return the assembled mass matrix for coupling between the chemical potantial and the concentration fields as well as the stiffness matrix.
 
 # Arguments:
 - `setup`:  a preconfigured object type that defined for elementweise assembly. 

@@ -114,7 +114,7 @@ end
 """
     RVESetup{dim}
 
-A `PhaseSetup` contains the relevant imformation for the solving the transient problem:
+A `RVESetup` contains the relevant imformation for the solving the transient problem:
 - `grid`:           a ``Grid`` defining the RVE geometry,
 - `dh`:             ``DofHandler`` based on the given grid,
 - `phasesetups`:    ``PhaseSetup`` in ``NamedTuple`` for each unknown field,
@@ -138,10 +138,15 @@ struct RVESetup{dim}
     g::Vector{Float64}
     aⁿ::Vector{Float64}
     aⁿ⁺¹::Vector{Float64}
+    Vʳᵛᵉ::Float64
 end
 
 """
-TODO
+    GaussPointData{dim}
+A mutable `GaussPointData` that prescribes and collects relevent datas from the corresponding RVE problem for each gauss point in macro scale problem:
+- `aᵣᵥₑⁿ`:           the result vector from every rve problem, 
+- `c̄ⁿ`:              the average concentration (only flactuation) at current time step,
+- `c̄₂ⁿ`:              the average gradient of concentration (only flactuation) at current time step.
 """
 mutable struct GaussPointData{dim}
     aᵣᵥₑⁿ::Vector{Float64}
@@ -151,7 +156,17 @@ end
 
 
 """
-TODO
+AssemblySetup{dim}
+
+An `AssemblySetup` contains the relevant imformation for the element assembly in macro scale problem:
+- `dh`:             ``DofHandler`` based on the given grid,
+- `cv`:             ``CellValues`` in ``NamedTuple`` for each unknown field,
+- `nbf`:            number of base function in ``NamedTuple`` for the unknown fields,
+- `Kₑ`:             element stiffness matrix,
+- `aₑ`:             element unknowns vector,
+- `subarrays`:      subarrays blocks associated with the unknown fields for element matrix assembly,
+- `gpdata`:         ``GaussPointData`` at corresponding cell and gauss point,
+- `rvesetup`:       ``RVESetup`` for evaluating fine scale rve problem at each gauss point.
 """
 struct AssemblySetup{dim}
     dh::DofHandler
@@ -166,7 +181,16 @@ end
 
 
 """
-TODO
+    SolveSetup{dim}
+
+A `SolveSetup` contains the relevant imformation for the solving the transient macro scale problem:
+- `grid`:           a ``Grid`` defining the RVE geometry,
+- `dh`:             ``DofHandler`` based on the given grid,
+- `ch`:             ``ConstraintHandler`` for updating the boundary condition at each time step,
+- `assemblysetup`:  ``AssemblySetup`` for element assembly,
+- `K`:              stiffness matrix,
+- `f`:              right hand side vector,
+- `aⁿ`:             unknowns at current time.
 """
 struct SolveSetup{dim}
 	grid::Grid{dim}

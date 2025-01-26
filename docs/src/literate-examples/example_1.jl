@@ -20,18 +20,20 @@ d = 0.1
 ϕ = 0.1
 meshsize = 0.1
 #
-# Generate a grid with spherical inclusions for a 3D Representative Volume Element (RVE) in desired meshsize. 
-# Material phases like partical and matrix are included as cell sets.
+# Generate a grid with spherical inclusions for a 3D Representative Volume Element (RVE) in desired meshsize
+# as well as one symplified grid for macro scale presentation.
+# Material phases like partical and matrix are included as cell sets in the rve grid.
 grid = generate_rve_grid(; ϕ=ϕ, d=d, meshsize=meshsize, dx=(1.0,1.0, 1.0))
+grid_macro = generate_grid(Tetrahedron, (1,1,1) , Vec{3, Float64}((-5,-5,-5)), Vec{3, Float64}((5,5,5)))
 # Construct an object as setup for solving the RVE problem.
 rve = RVE(grid, P, M)
-setup = prepare_setup(rve)
+setup_rve = prepare_setup(rve)
 # Perform the assembly for constructing the system matrices K and M.
-(; aⁿ, aⁿ⁺¹) = setup
-assemble_K_M!(setup)
-# Solve the time dependent problem applying the Crank-Nicolson Method.
-Δt=0.1
-setup, aⁿ⁺¹ = compute_time_step!(setup, load, Δt)
+assemble_K_M_f!(setup_rve)
+# Solve the time dependent problem macro scale problem.
+res, res_rve, setup = solve_macro_problem(grid_macro, setup_rve,  Δt=1e-4, t_total=1e-3)
+# visualise the results from both fine scale and macro scale problem.
+file, fig, anim = animate_combined_result(res, res_rve, setup, file_name="Myresult.mp4", scale=100.0)
 
 #md # ## [Plain program](@id example_1-plain-program)
 #md #

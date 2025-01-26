@@ -11,4 +11,6 @@ assemble_macro_K!
 assemble_macro_element!
 solve_macro_problem
 animate_macro_result
+_prepare_plots!
+animate_combined_result
 ```

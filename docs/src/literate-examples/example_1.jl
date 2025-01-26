@@ -28,12 +28,11 @@ grid_macro = generate_grid(Tetrahedron, (1,1,1) , Vec{3, Float64}((-5,-5,-5)), V
 # Construct an object as setup for solving the RVE problem.
 rve = RVE(grid, P, M)
 setup_rve = prepare_setup(rve)
-# Perform the assembly for constructing the system matrices K and M.
+# Perform the assembly for constructing the system matrices K, M, and right hand side vector f.
 assemble_K_M_f!(setup_rve)
 # Solve the time dependent problem macro scale problem.
 res, res_rve, setup = solve_macro_problem(grid_macro, setup_rve,  Δt=1e-4, t_total=1e-3)
-# visualise the results from both fine scale and macro scale problem.
-file, fig, anim = animate_combined_result(res, res_rve, setup, file_name="Myresult.mp4", scale=100.0)
+# a visualization of results from both fine scale and macro scale problem can use ``animate_combined_result``
 
 #md # ## [Plain program](@id example_1-plain-program)
 #md #

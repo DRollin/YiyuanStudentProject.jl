@@ -10,14 +10,13 @@ d = 0.1
 meshsize = 0.1
 
 grid = generate_rve_grid(; ϕ=ϕ, d=d, meshsize=meshsize, dx=(1.0,1.0, 1.0))
+grid_macro = generate_grid(Tetrahedron, (1,1,1) , Vec{3, Float64}((-5,-5,-5)), Vec{3, Float64}((5,5,5)))
 
 rve = RVE(grid, P, M)
-setup = prepare_setup(rve)
+setup_rve = prepare_setup(rve)
 
-(; aⁿ, aⁿ⁺¹) = setup
-assemble_K_M!(setup)
+assemble_K_M_f!(setup_rve)
 
-Δt=0.1
-setup, aⁿ⁺¹ = compute_time_step!(setup, load, Δt)
+res, res_rve, setup = solve_macro_problem(grid_macro, setup_rve,  Δt=1e-4, t_total=1e-3)
 
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl

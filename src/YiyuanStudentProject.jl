@@ -13,6 +13,8 @@ using ForwardDiff
 
 import Makie: Makie, GeometryBasics
 
+import LinearSolve, Pardiso
+
 using ProgressLogging
 using Logging: global_logger
 using TerminalLoggers: TerminalLogger

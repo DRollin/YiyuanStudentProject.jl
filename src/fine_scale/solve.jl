@@ -51,12 +51,10 @@ function solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.1, t_total
     setup = prepare_setup(rve)
     (; aⁿ, aⁿ⁺¹) = setup
     assemble_K_M_f!(setup)
-    
 
     nsteps = ceil(Int, t_total/Δt)
 	res = (t = Vector{Float64}(undef, nsteps+1),
            a = Vector{Vector{Float64}}(undef, nsteps+1))
-    
     
 	res.t[1] = 0.0
     res.a[1] = deepcopy(aⁿ)

@@ -45,7 +45,16 @@ function solve_macro_problem(grid::Grid{dim}, rvesetup::RVESetup{dim}; Δt=0.1, 
             assemble_macro_K!(setup, Δt)
 
             apply!(K, f, ch)
-            aⁿ .= K \ f
+
+            # Solver for ill-conditioned matrices
+            prob = LinearSolve.LinearProblem(K, f)
+            sol  = LinearSolve.solve(prob, LinearSolve.MKLPardisoFactorize())
+            aⁿ .= sol.u
+            cacheval = sol.cache.cacheval
+            Pardiso.set_phase!(cacheval, Pardiso.RELEASE_ALL)
+            Pardiso.pardiso(cacheval)
+            
+            #aⁿ .= K \ f
             apply!(aⁿ, ch)
 
             res.t[i+1] = tⁿ⁺¹

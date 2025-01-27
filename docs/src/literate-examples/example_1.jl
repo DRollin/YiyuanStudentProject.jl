@@ -9,7 +9,8 @@
 using YiyuanStudentProject
 #
 # ## Fine scale
-# Prepare for a 3d Representative Volume Element (RVE) problem. The material parameters are defined based on values from literatures. 
+# Setting up the dimension, material parameters, `loadcase` originated from macro scale for solving a 3D RVE problem. The material parameters are characterized using simple values
+# for the particle `P` and Matrix `M`. Parameters like the average particle diameter `d`, the particle volume fraction `ϕ`, and the `meshsize` are given followed.
 dim = 3
 
 P = Material{dim}(; G=4.0e5, K=6.67e5, η=1.0, cʳᵉᶠ=1.0, μʳᵉᶠ=1.0, θʳᵉᶠ=1.0, cᵐ=1.0, α=0.0001)
@@ -19,18 +20,19 @@ d = 0.1
 ϕ = 0.1
 meshsize = 0.1
 #
-# Generate a grid with spherical inclusions for a 3D Representative Volume Element (RVE) in desired meshsize. 
-# Material phases like partical and matrix are included.
+# Generate a grid with spherical inclusions for a 3D Representative Volume Element (RVE) in desired meshsize
+# as well as one symplified grid for macro scale presentation.
+# Material phases like partical and matrix are included as cell sets in the rve grid.
 grid = generate_rve_grid(; ϕ=ϕ, d=d, meshsize=meshsize, dx=(1.0,1.0, 1.0))
-# Construct a object struct as setups for solving the RVE problem.
+grid_macro = generate_grid(Tetrahedron, (1,1,1) , Vec{3, Float64}((-5,-5,-5)), Vec{3, Float64}((5,5,5)))
+# Construct an object as setup for solving the RVE problem.
 rve = RVE(grid, P, M)
-setup = prepare_setup(rve)
-# Do assembly for constructing the system matrices K and M.
-(; aⁿ, aⁿ⁺¹) = setup
-assemble_K_M!(setup)
-# Solve time dependent problem using implicit Crank-Nicolson Method.
-Δt=0.1
-setup, aⁿ⁺¹ = compute_time_step!(setup, load, Δt)
+setup_rve = prepare_setup(rve)
+# Perform the assembly for constructing the system matrices K, M, and right hand side vector f.
+assemble_K_M_f!(setup_rve)
+# Solve the time dependent problem macro scale problem.
+res, res_rve, setup = solve_macro_problem(grid_macro, setup_rve,  Δt=1e-4, t_total=1e-3)
+# a visualization of results from both fine scale and macro scale problem can use ``animate_combined_result``
 
 #md # ## [Plain program](@id example_1-plain-program)
 #md #

@@ -10,4 +10,7 @@ RVE
 LoadCase
 PhaseSetup
 RVESetup
+GaussPointData
+AssemblySetup
+SolveSetup
 ```

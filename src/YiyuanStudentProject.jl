@@ -5,7 +5,6 @@ using Reexport
 using FerriteGmsh
 using SparseArrays, OrderedCollections
 
-
 using BubbleBath
 using Distributions: Uniform
 using LaTeXStrings
@@ -14,35 +13,28 @@ using ForwardDiff
 
 import Makie: Makie, GeometryBasics
 
-#include("C:\\Users\\Yiyua\\.julia\\packages\\Gmsh\\vuFrI\\src\\Gmsh.jl")
+using ProgressLogging
+using Logging: global_logger
+using TerminalLoggers: TerminalLogger
 
-# TODO:
-# - Improve Plotting
-# - Prepare upscaling -> Avergage Flux j̄, and stress σ̄
-# - Check boundary conditions for ū, μ̄
-#       -> 1. find node id of the node closest to coordinate origin (center of RVE)
-#       -> Dirichlet(:u, OrderedSet{Int}([nodeid]), (x,t) -> zero(Vec{dim}))
-#          Dirichlet(:μ, OrderedSet{Int}([nodeid]), (x,t) -> μ̄)
-# - Change initial state: u=0, c=cref, μ=μref -> apply_analytical!()
-# - Add tests and docs
+global_logger(TerminalLogger())
+
+
 
 δ(i,j) = i == j ? 1 : 0
 
 include("types.jl")
-export Material, RVE, LoadCase, PhaseSetup, FESetup
+export Material, RVE, LoadCase, PhaseSetup, FESetup, AssemblySetup, SolveSetup, GaussPointData
 
 include("fine_scale/mesh_generation.jl")
 export generate_rve_spheres, generate_rve_grid, generate_box_grid, 
-    add_sphere_to_gmsh, generate_spheres, get_radius_pdf, get_tags_from_dimtags
-
-#include("fine_scale/mesh_characteristics.jl")
-#export get_volume
+        generate_spheres, get_radius_pdf
 
 include("fine_scale/setup.jl")
 export prepare_setup
 
 include("fine_scale/assembly.jl")
-export assemble_K_M!, assemble_element!
+export assemble_K_M_f!, assemble_element!
 
 include("fine_scale/solve.jl")
 export compute_time_step!, solve_time_series
@@ -50,25 +42,19 @@ export compute_time_step!, solve_time_series
 include("fine_scale/plotting.jl")
 export animate_result
 
-#include("fine_scale/averaging.jl")
-#export compute_homogenized_potential, compute_homogenized_gradient
-    # Upscaling
-#=
 include("upscaling/averaging.jl")
-include("upscaling/sensitivities.jl")
+export compute_effective_response, average_quantities
 
-export EffectiveResponse,
-    Sensitivities, compute_sensitivities, average_bulk_quantities, compute_effective_response
+include("macro_scale/setup.jl")
+export add_macro_bc!, prepare_macro_setup
 
-    # Macro scale
-    
-include("macro_scale/problem_setup.jl")
 include("macro_scale/assembly.jl")
-include("macro_scale/plotting.jl")
+export assemble_macro_K!, assemble_macro_element!
+
 include("macro_scale/solve.jl")
+export solve_macro_problem
 
-
-export solve_macro_problem, plot_macro_potential
-=#
+include("macro_scale/plotting.jl")
+export animate_macro_result, animate_combined_result
 
 end

@@ -1,16 +1,16 @@
 """
     Material{dim,T}
 
-A `Material` material type object used for defining the material character with the following parameters:
+A ``Material`` characterize the constitutive behavior with:
 
 - `E`:          fourth order stiffness tensor E,
-- `αᶜʰ`:        isotropic ion intercalation tensor,
-- `k`:          concentration-chemical potantial coefficient,
+- `αᶜʰ`:        second order ion intercalation tensor,
+- `k`:          concentration-chemical potential coefficient,
 - `cʳᵉᶠ`:       reference concentration,
-- `M`:          mobility tensor,
+- `M`:          second order mobility tensor,
 - `μʳᵉᶠ`        reference chemical potantial.
 
-The type can be created by calling the funtion `Material{dim}(; G::T, K::T, η::T, cʳᵉᶠ::T, μʳᵉᶠ::T, θʳᵉᶠ::T, cᵐ::T, α::T, R::T=8.31446261815324) where {dim, T<:Real}`
+A ``Material`` with isotropic properties can be created by calling the funtion `Material{dim}(; G::T, K::T, η::T, cʳᵉᶠ::T, μʳᵉᶠ::T, θʳᵉᶠ::T, cᵐ::T, α::T, R::T=8.31446261815324) where {dim, T<:Real}`
 """
 struct Material{dim,T}
     E::Tensor{4,dim,T}
@@ -29,9 +29,9 @@ function Material{dim}(; G::T, K::T, η::T, cʳᵉᶠ::T, μʳᵉᶠ::T, θʳᵉ
 end
 
 """
-    RVE{dim}
+    [RVE{dim}](@ref)
 
-An object called `RVE` that contains
+A ``RVE`` is defined by a geometry and material characteristic of constituents that contains
 - `grid`:       a Grid for the prescribed RVE,
 - `P`:          Material type for partical constraints,
 - `M`:          Material type for matrix.
@@ -50,12 +50,12 @@ end
 """
     LoadCase{dim}
 
-A `LoadCase` type object that defined the external forces
-- `ε̄`:          averaging external strain Tensor,
+A `LoadCase` defines the macro scale quantities imposed on RVE as loading
+- `ε̄`:          averaging external strain tensor,
 - `μ̄`:          averaging chemical potantial on the boundary,
 - `ζ̄`          gradient of the averaging chemical potantial on the boundary.
 
-The struct can be created by calling the funtion `LoadCase(dim::Int; kwargs...)
+To create a ``LoadCase`` by defining only the non-zero tensor components the constructor `LoadCase(dim::Int; kwargs...)` can be used.
 """
 struct LoadCase{dim}
     ε̄::SymmetricTensor{2,dim,Float64}
@@ -88,51 +88,116 @@ end
 """
     PhaseSetup{dim}
 
-A `PhaseSetup` type object that contains the relevant imformations for the element assembly:
-- `dh`:             dofHandler based on the given grid,
-- `cells`:          ordered cell sets,
-- `cv`:             cellvalues in named tuple for each unknown field representivly,
-- `nbf`:            number of base function in named tuple for the unknown fields representivly,
-- `material`:       material struct,
+A `PhaseSetup` contains the relevant imformation for the element assembly:
+- `dh`:             ``DofHandler`` based on the given grid,
+- `cells`:          ordered cell set defining the phase domain,
+- `cv`:             ``CellValues`` in ``NamedTuple`` for each unknown field,
+- `nbf`:            number of base function in ``NamedTuple`` for the unknown fields,
+- `material`:       ``Material`` of the phase,
 - `Kₑ`:             element stiffness matrix,
 - `Mₑ`:             element mass matrix,
-- `submatrices`:    submatrices for locating the unknown fields for element matrix assembly.
+- `fₑ`:             element right hand side vector,
+- `subarrays`:      subarrays blocks associated with the unknown fields for element matrix assembly.
 """
 struct PhaseSetup{dim}
     dh::DofHandler
     cells::OrderedSet{Int}
-    cv::NamedTuple
-    nbf::NamedTuple
+    cv::NamedTuple{(:u,:μ,:c),NTuple{3,CellValues}}
+    nbf::NamedTuple{(:u,:μ,:c),NTuple{3,Int}}
     material::Material{dim}
     Kₑ::Matrix{Float64}
     Mₑ::Matrix{Float64}
-    submatrices::NamedTuple
+    fₑ::Vector{Float64}
+    subarrays::NamedTuple
 end
 
 """
     RVESetup{dim}
 
-A `PhaseSetup` object that contains the relevant imformations for the problem solving/time stepping:
-- `grid`:           a Grid for the prescribed RVE,
-- `dh`:             dofHandler based on the given grid,
-- `phasesetups`:    struct PhaseSetup in named tuple for each unknown field representivly,
-- `K`:              stiffness matrix
-- `M`:              mass matrix
-- `J`:              jacobian matrix for time stepping
-- `g`:              residual vector for time stepping
-- `aⁿ`:              unknowns in current step
-- `aⁿ⁺¹`:           unknowns in next step
+A `RVESetup` contains the relevant imformation for the solving the transient problem:
+- `grid`:           a ``Grid`` defining the RVE geometry,
+- `dh`:             ``DofHandler`` based on the given grid,
+- `phasesetups`:    ``PhaseSetup`` in ``NamedTuple`` for each unknown field,
+- `K`:              stiffness matrix,
+- `M`:              mass matrix,
+- `f`:              right hand side vector,
+- `J`:              system matrix for time stepping,
+- `g`:              system vector for time stepping,
+- `aⁿ`:             unknowns at current time,
+- `aⁿ⁺¹`:           unknowns after performing a time,
+- `Vʳᵛᵉ`:           Volume of the RVE.
 """
 struct RVESetup{dim}
 	grid::Grid{dim}
 	dh::DofHandler{dim}
-	#ch::ConstraintHandler -> Wee need to be able to change the constraints...
-    #sets::NamedTuple{(:P,:M),Tuple{Set{Int64},Set{Int64}}}
     phasesetups::NamedTuple{(:P,:M),Tuple{PhaseSetup{dim},PhaseSetup{dim}}}
     K::SparseMatrixCSC{Float64, Int64}
     M::SparseMatrixCSC{Float64, Int64}
-    J:: SparseMatrixCSC{Float64, Int64}
-    g:: Vector{Float64}
+    f::Vector{Float64}
+    J::SparseMatrixCSC{Float64, Int64}
+    g::Vector{Float64}
     aⁿ::Vector{Float64}
     aⁿ⁺¹::Vector{Float64}
+    Vʳᵛᵉ::Float64
+end
+
+"""
+    GaussPointData{dim}
+A mutable `GaussPointData` that prescribes and collects relevent datas from the corresponding RVE problem for each gauss point in macro scale problem:
+- `aᵣᵥₑⁿ`:           the result vector from every rve problem, 
+- `c̄ⁿ`:              the average concentration (only flactuation) at current time step,
+- `c̄₂ⁿ`:              the average gradient of concentration (only flactuation) at current time step.
+"""
+mutable struct GaussPointData{dim}
+    aᵣᵥₑⁿ::Vector{Float64}
+    c̄ⁿ::Float64
+    c̄₂ⁿ::Tensor{1,dim,Float64}
+end
+
+
+"""
+AssemblySetup{dim}
+
+An `AssemblySetup` contains the relevant imformation for the element assembly in macro scale problem:
+- `dh`:             ``DofHandler`` based on the given grid,
+- `cv`:             ``CellValues`` in ``NamedTuple`` for each unknown field,
+- `nbf`:            number of base function in ``NamedTuple`` for the unknown fields,
+- `Kₑ`:             element stiffness matrix,
+- `aₑ`:             element unknowns vector,
+- `subarrays`:      subarrays blocks associated with the unknown fields for element matrix assembly,
+- `gpdata`:         ``GaussPointData`` at corresponding cell and gauss point,
+- `rvesetup`:       ``RVESetup`` for evaluating fine scale rve problem at each gauss point.
+"""
+struct AssemblySetup{dim}
+    dh::DofHandler
+    cv::NamedTuple{(:u,:μ),NTuple{2,CellValues}}
+    nbf::NamedTuple{(:u,:μ),NTuple{2,Int}}
+    Kₑ::Matrix{Float64}
+    aₑ::Vector{Float64}
+    subarrays::NamedTuple
+    gpdata::Vector{Vector{GaussPointData{dim}}}
+    rvesetup::RVESetup{dim}
+end
+
+
+"""
+    SolveSetup{dim}
+
+A `SolveSetup` contains the relevant imformation for the solving the transient macro scale problem:
+- `grid`:           a ``Grid`` defining the RVE geometry,
+- `dh`:             ``DofHandler`` based on the given grid,
+- `ch`:             ``ConstraintHandler`` for updating the boundary condition at each time step,
+- `assemblysetup`:  ``AssemblySetup`` for element assembly,
+- `K`:              stiffness matrix,
+- `f`:              right hand side vector,
+- `aⁿ`:             unknowns at current time.
+"""
+struct SolveSetup{dim}
+	grid::Grid{dim}
+	dh::DofHandler{dim}
+    ch::ConstraintHandler
+    assemblysetup::AssemblySetup{dim}
+    K::SparseMatrixCSC{Float64, Int64}
+    f::Vector{Float64}
+    aⁿ::Vector{Float64}
 end

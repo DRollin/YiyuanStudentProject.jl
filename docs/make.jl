@@ -3,11 +3,16 @@ using TimerOutputs
 dto = TimerOutput()
 reset_timer!(dto)
 
-using Documenter, YiyuanStudentProject
+using Documenter, YiyuanStudentProject, DocumenterCitations
 
 DocMeta.setdocmeta!(YiyuanStudentProject, :DocTestSetup, :(using YiyuanStudentProject); recursive=true)
 
 include("generate.jl")
+
+bib = CitationBibliography(
+    joinpath(@__DIR__, "src", "assets", "refs.bib"),
+    style=:numeric  # default
+)
 
 makedocs(;
     modules=[YiyuanStudentProject],
@@ -16,7 +21,7 @@ makedocs(;
     format=Documenter.HTML(;
         canonical="https://github.com/DRollin/YiyuanStudentProject.jl.git",
         edit_link="main",
-        assets=String[],
+        assets=String["assets/citations.css"],
     ),
     pages=[
         "Home" => "index.md",
@@ -25,14 +30,18 @@ makedocs(;
             "documentation/fine_scale.md",
             "documentation/upscaling.md",
             "documentation/macro_scale.md",
+            "documentation/reference.md",
         ],
         "Example"  => "examples/example_1.md",
         "Reference" => [
             "Reference overview" => "reference/index.md",
             "reference/types.md",
             "reference/fine_scale.md",
+            "reference/upscaling.md",
+            "reference/macro_scale.md",
         ],
     ],
+    plugins=[bib],
 )
 
 deploydocs(;

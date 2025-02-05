@@ -28,15 +28,14 @@ makedocs(;
         "Documentation" => [
             "Documentation overview" => "documentation/index.md",
             "documentation/fine_scale.md",
-            "documentation/upscaling.md",
-            "documentation/macro_scale.md",
+            "documentation/multi_scale.md",
             "documentation/reference.md",
         ],
         "Example"  => "examples/example_1.md",
         "Reference" => [
             "Reference overview" => "reference/index.md",
             "reference/types.md",
-            "reference/fine_scale.md",
+            "reference/sub_scale.md",
             "reference/upscaling.md",
             "reference/macro_scale.md",
         ],

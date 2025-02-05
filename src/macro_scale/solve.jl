@@ -19,8 +19,8 @@ Initialize the solution storage. Do time stepping with updating the boundary con
 The updated boundary condition is then applied to the global stiffness matrix and force vector as well as the solution vector.
 
 """
-function solve_macro_problem(grid::Grid{dim}, rvesetup::RVESetup{dim}; Δt=0.1, t_total=1) where {dim}
-    setup = prepare_macro_setup(grid, rvesetup, Δt)
+function solve_macro_problem(grid::Grid{dim}, rvesetup::RVESetup{dim}, rve::RVE{dim}, bc::MacroBCParams; Δt=0.1, t_total=1) where {dim}
+    setup = prepare_macro_setup(grid, rvesetup, rve, Δt, bc)
     (; grid, ch, K, f, aⁿ, assemblysetup) = setup
     (; gpdata) = assemblysetup
     
@@ -45,7 +45,17 @@ function solve_macro_problem(grid::Grid{dim}, rvesetup::RVESetup{dim}; Δt=0.1, 
             assemble_macro_K!(setup, Δt)
 
             apply!(K, f, ch)
-            aⁿ .= K \ f
+
+            # Solver for ill-conditioned matrices
+            prob = LinearSolve.LinearProblem(K, f)
+            sol  = LinearSolve.solve(prob, LinearSolve.MKLPardisoFactorize())
+            aⁿ .= sol.u
+            cacheval = sol.cache.cacheval
+            Pardiso.set_phase!(cacheval, Pardiso.RELEASE_ALL)
+            Pardiso.pardiso(cacheval)
+
+            #aⁿ .= K \ f
+
             apply!(aⁿ, ch)
 
             res.t[i+1] = tⁿ⁺¹

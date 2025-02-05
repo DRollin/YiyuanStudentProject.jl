@@ -1,7 +1,7 @@
 """
     add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 
-Add a dirichlet boundary condition for the unknown fields respectively on the `∂Ω` part of the boundary. `∂Ω` is defined by the collection of periodic facets from the `grid`. 
+Add a dirichlet boundary condition for the unknown fields respectively on the `∂Ω` part of the boundary. `∂Ω` is defined by the collection of facets from the `grid`. 
 """
 function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 	(; ε̄, μ̄, ζ̄) = load
@@ -10,13 +10,6 @@ function add_bc!(ch::ConstraintHandler, grid::Grid{3}, load::LoadCase{3})
 	add!(ch, Dirichlet(:μ, ∂Ω, (x,t) -> μ̄ + ζ̄⋅x))
 	add!(ch, Dirichlet(:u, ∂Ω, (x,t) -> ε̄⋅x))
 
-	#centernode_idx = argmin((idx_node) -> norm(idx_node[2].x), enumerate(grid.nodes))[1]
-
-	#centernode = OrderedSet{Int}([centernode_idx])
-
-	#centernode =  OrderedSet{Int}([ argmin(n -> norm(n.x), grid.nodes) ])
-	#add!(ch, Dirichlet(:u, centernode, (x,t) -> zero(Vec{3})))
-	#add!(ch, Dirichlet(:μ, centernode, (x,t) -> μ̄))
 	return ch
 end
 

@@ -1,6 +1,5 @@
 # # [Example 1](@id example-1)
 #
-# ![](description_problem.png)
 #
 # *Figure 1* Schematic illustration of a FE² framwork with two material phases (Particles in blue and matrix in gray) in RVE and a possible boundary condition on macro scale object 
 # as well as required parameters for a transient chemo-mechanical problem

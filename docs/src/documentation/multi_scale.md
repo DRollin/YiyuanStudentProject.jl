@@ -1,7 +1,7 @@
 # [Chemo-Mechanical Problem - multi scale](@id documentation-multi-scale)
 Doable, but to solve a transit chemo-mechanical problem with three coupled unknown fields in a realistic dimension is rather computational expensive. Instead of using the classical finite elmente approach, this complex problem can be decomposed into an appropriately defined RVE (sub scale) with all featuring details from the actual probelm and a corresponding homogenized macro scale problem with the actual dimension.
 
-
+![alt text](image.png)
 *Fig. 1*: schematic diagram of decomposition of a fine scale problem using multi-scale method. 
 
 ## Running Averaging on RVE

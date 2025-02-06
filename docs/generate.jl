@@ -35,7 +35,7 @@ include("download_resources.jl")
         #@timeit dto "notebook()"  @timeit dto name begin
         #    Literate.notebook(program, OUT, preprocess = nbpre, execute = is_ci) # Don't execute locally
         #end
-    elseif any(endswith.(program, [".png", ".jpg", ".gif"]))
+    elseif any(endswith.(program, [".png", ".jpg", ".gif", ".mp4"]))
         cp(program, joinpath(OUT, name); force=true)
     else
         @warn "ignoring $program"

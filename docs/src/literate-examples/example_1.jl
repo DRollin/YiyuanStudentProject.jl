@@ -61,13 +61,13 @@ function example(Δt, t_total)
     bc = MacroBCParams(Vec{3}((0.01, 0.0, 0.0)), Vec{3}((0.0, 0.0, 0.0)), 1.0, 0.0, "left", "right")
     res, res_rve, setup = solve_macro_problem(grid_macro, setup_rve, rve, bc, Δt=Δt, t_total=t_total)
 
-    file, fig, anim = animate_combined_result(res, res_rve, setup, file_name="Myresult.mp4", scale=1000.0)
+    #file, fig, anim = animate_combined_result(res, res_rve, setup, file_name="Myresult.mp4", scale=1000.0)
 end
 
 # Run the simulation
 example(1e-6, 1e-5)
 #
-# ![](Myresult.mp4)
+# 
 
 #md # ## [Plain program](@id example_1-plain-program)
 #md #

@@ -5,7 +5,7 @@ dim = 3
 
 P = Material{dim}(; G=4.5e5, K=8.0e5, η=0.5, cʳᵉᶠ=0.0, μʳᵉᶠ=0.0, θʳᵉᶠ=298.5, cᵐ=1.0, α=2.0)
 M = Material{dim}(; G=0.8e5, K=1.7e5, η=1.0, cʳᵉᶠ=0.0, μʳᵉᶠ=0.0, θʳᵉᶠ=298.5, cᵐ=1.0, α=0.0) #G=0.8e5, K=1.7e5
-load = LoadCase(dim; ε̄₁₁=0.1, μ̄=1.0, ζ̄₁=0.1)
+#load = LoadCase(dim; ε̄₁₁=0.1, μ̄=1.0, ζ̄₁=0.1)
 
 d = 0.2
 ϕ = 0.3 
@@ -13,7 +13,7 @@ meshsize = 0.1
 grid_rve = generate_rve_grid(; ϕ=ϕ, d=d, meshsize=meshsize, dx=(1.0,1.0,1.0))
 rve = RVE(grid_rve, P, M)
 
-nx = 1
+nx = 2
 grid_macro = generate_grid(Tetrahedron, (nx,nx,nx) , Vec{3, Float64}((-nx*50,-nx*50,-nx*50)), Vec{3, Float64}((nx*50,nx*50,nx*50)))
 
 setup_rve = prepare_setup(rve)

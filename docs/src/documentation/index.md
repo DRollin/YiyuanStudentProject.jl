@@ -4,6 +4,6 @@
 Pages = [
     "fine_scale.md",
     "multi_scale.md",
-    "reference.md",
-]
+    "challenge_problem.md",
+    "reference.md",]
 ```

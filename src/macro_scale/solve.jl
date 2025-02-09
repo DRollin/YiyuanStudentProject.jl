@@ -18,6 +18,10 @@ Initialize the solution storage. Do time stepping with updating the boundary con
 
 The updated boundary condition is then applied to the global stiffness matrix and force vector as well as the solution vector.
 
+Using solver from Pardiso.jl for eventually ill conditioned system matrices. Update the boundary condition on the result vector.
+
+Copy the new solution vector in the storage with the corresponding time step.
+
 """
 function solve_macro_problem(grid::Grid{dim}, rvesetup::RVESetup{dim}, rve::RVE{dim}, bc::MacroBCParams; Δt=0.1, t_total=1) where {dim}
     setup = prepare_macro_setup(grid, rvesetup, rve, Δt, bc)

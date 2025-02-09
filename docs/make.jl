@@ -29,6 +29,7 @@ makedocs(;
             "Documentation overview" => "documentation/index.md",
             "documentation/fine_scale.md",
             "documentation/multi_scale.md",
+            "documentation/challenge_problem.md",
             "documentation/reference.md",
         ],
         "Example"  => "examples/example_1.md",

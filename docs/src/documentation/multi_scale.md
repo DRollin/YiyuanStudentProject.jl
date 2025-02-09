@@ -24,36 +24,36 @@ Thus, using first order Taylor expension(linear variation) the homogenized field
 
 ```math
 \begin{align}
-\boldsymbol u^{M}[\bar{\boldsymbol u}](\bar{\boldsymbol x}, \boldsymbol x ) &= \bar{\boldsymbol u}(\bar{\boldsymbol x}) + \bar{\boldsymbol \xi}(\bar{\boldsymbol x}) \cdot [x - \bar{\boldsymbol x}], \ \ \bar{\boldsymbol \xi} := \bar{\boldsymbol u}  \otimes \boldsymbol \nabla, & \ x \in \boldsymbol \Omega_\square
+\boldsymbol u^\text{M}[\bar{\boldsymbol u}](\bar{\boldsymbol x}, \boldsymbol x ) &= \bar{\boldsymbol u}(\bar{\boldsymbol x}) + \bar{\boldsymbol \xi}(\bar{\boldsymbol x}) \cdot [x - \bar{\boldsymbol x}], \ \ \bar{\boldsymbol \xi} := \bar{\boldsymbol u}  \otimes \boldsymbol \nabla, & \ x \in \boldsymbol \Omega_\square
 
 \\
 
-\boldsymbol \mu^{M}[\bar{\boldsymbol \mu}](\bar{\boldsymbol x}, \boldsymbol x ) &= \bar{\boldsymbol \mu}(\bar{\boldsymbol x}) + \bar{\boldsymbol \zeta}(\bar{\boldsymbol x}) \cdot [x - \bar{\boldsymbol x}], \ \ \bar{\boldsymbol \zeta} := \boldsymbol \nabla \bar{\boldsymbol \mu}  , & \ x \in \boldsymbol \Omega_\square
+\boldsymbol \mu^\text{M}[\bar{\boldsymbol \mu}](\bar{\boldsymbol x}, \boldsymbol x ) &= \bar{\boldsymbol \mu}(\bar{\boldsymbol x}) + \bar{\boldsymbol \zeta}(\bar{\boldsymbol x}) \cdot [x - \bar{\boldsymbol x}], \ \ \bar{\boldsymbol \zeta} := \boldsymbol \nabla \bar{\boldsymbol \mu}  , & \ x \in \boldsymbol \Omega_\square
 \end{align}
 ```
 where $\bar{\boldsymbol x}$ is centriod and also holds to the upscaling rules mentioned earlier.
 
 ## Upscaling
-After inserting the hierarchical decomposition $\boldsymbol u = \boldsymbol u ^{M} + \boldsymbol u ^{s} \in \mathbb U ^{M} \oplus \mathbb U ^{s}$ and $\boldsymbol \mu = \boldsymbol \mu ^{M} + \boldsymbol \mu ^{s} \in \mathbb M ^{M} \oplus \mathbb M ^{s}$ and the upsacling assumption $\bar \diamond := \langle \diamond \rangle _{\square}$ into the fine scale week form:
+After inserting the hierarchical decomposition $\boldsymbol u = \boldsymbol u ^\text{M} + \boldsymbol u ^\text{s} \in \mathbb U ^\text{M} \oplus \mathbb U ^\text{s}$ and $\boldsymbol \mu = \boldsymbol \mu ^\text{M} + \boldsymbol \mu ^\text{s} \in \mathbb M ^\text{M} \oplus \mathbb M ^\text{s}$ and the upsacling assumption $\bar \diamond := \langle \diamond \rangle _{\square}$ into the fine scale week form:
 
 ```math
 \begin{align}
-\int_{\Omega} \langle \boldsymbol \sigma (\boldsymbol \varepsilon[\boldsymbol u ^{M}[\bar {\boldsymbol u}] + \boldsymbol u ^{s}],\boldsymbol c ^{s}) : \boldsymbol \varepsilon[\boldsymbol u ^{M}[ \delta \bar {\boldsymbol u} ]+ \delta\boldsymbol u ^{s}] \rangle _\square \ d\Omega  &=  \int_{\Gamma_N^{(u)}} \boldsymbol t^\text{p} \cdot \delta \bar{\boldsymbol u} \ d\Gamma
+\int_{\Omega} \langle \boldsymbol \sigma (\boldsymbol \varepsilon[\boldsymbol u ^{M}[\bar {\boldsymbol u}] + \boldsymbol u ^\text{s}],\boldsymbol c ^\text{s}) : \boldsymbol \varepsilon[\boldsymbol u ^{M}[ \delta \bar {\boldsymbol u} ]+ \delta\boldsymbol u ^\text{s}] \rangle _\square \ d\Omega  &=  \int_{\Gamma_N^\text{(u)}} \boldsymbol t^\text{p} \cdot \delta \bar{\boldsymbol u} \ d\Gamma
 &\
-\forall \delta (\bar{\boldsymbol u}, {\boldsymbol u} ^{s}) &\in \bar {\mathbb{U}}^{0} \oplus \mathbb U ^{s}
+\forall \delta (\bar{\boldsymbol u}, {\boldsymbol u} ^\text{s}) &\in \bar {\mathbb{U}}^\text{0} \oplus \mathbb U ^\text{s}
 \\
-\int_{\Omega} \langle \dot{\boldsymbol c} ^{s} \ [\mu ^{M} [\delta \bar{\boldsymbol \mu}] + \delta\mu^{s}] \rangle _\square \ d\Omega - \int_{\Omega} \boldsymbol \langle j(\boldsymbol \nabla[\mu ^{M} [\bar{\boldsymbol \mu}] + \mu^{s}]) \cdot \boldsymbol \nabla[\mu ^{M} [\delta \bar{\boldsymbol \mu}] + \delta\mu^{s}] \rangle _\square \ d\Omega
-&=  \int_{\Gamma_N^{(\mu)}} \boldsymbol h^\text{p} \delta \bar{\boldsymbol \mu} \ d\Gamma
+\int_{\Omega} \langle \dot{\boldsymbol c} ^\text{s} \ [\mu ^\text{M} [\delta \bar{\boldsymbol \mu}] + \delta\mu^\text{s}] \rangle _\square \ d\Omega - \int_{\Omega} \boldsymbol \langle j(\boldsymbol \nabla[\mu ^\text{M} [\bar{\boldsymbol \mu}] + \mu^\text{s}]) \cdot \boldsymbol \nabla[\mu ^\text{M} [\delta \bar{\boldsymbol \mu}] + \delta\mu^\text{s}] \rangle _\square \ d\Omega
+&=  \int_{\Gamma_N^{\mu}} \boldsymbol h^\text{p} \delta \bar{\boldsymbol \mu} \ d\Gamma
 &\
-\forall \delta (\bar{\boldsymbol \mu}, {\boldsymbol \mu} ^{s}) &\in \bar {\mathbb{M}}^{0} \oplus \mathbb M ^{s}
+\forall \delta (\bar{\boldsymbol \mu}, {\boldsymbol \mu} ^\text{s}) &\in \bar {\mathbb{M}}^\text{0} \oplus \mathbb M ^\text{s}
 \\
-\int_{\Omega} \langle ([\mu ^{M} [\bar{\boldsymbol \mu}] + \mu^{s}] - \boldsymbol \mu^\text{en}(\boldsymbol \varepsilon[\boldsymbol u ^{M}[\bar {\boldsymbol u}] + \boldsymbol u ^{s}], \boldsymbol c^{s})) \delta \boldsymbol c^{s} \rangle _\square \ d\Omega
+\int_{\Omega} \langle ([\mu ^\text{M} [\bar{\boldsymbol \mu}] + \mu^\text{s}] - \boldsymbol \mu^\text{en}(\boldsymbol \varepsilon[\boldsymbol u ^\text{M}[\bar {\boldsymbol u}] + \boldsymbol u ^\text{s}], \boldsymbol c^\text{s})) \delta \boldsymbol c^\text{s} \rangle _\square \ d\Omega
 &= 0
 &\
-\forall \delta \boldsymbol c^{s} &\in \mathbb{C}^{0}
+\forall \delta \boldsymbol c^\text{s} &\in \mathbb{C}^\text{0}
 \end{align}
 ```
-so that with setting $\delta \boldsymbol u^{s}, \delta \boldsymbol \mu^{s}, \delta \boldsymbol \mu^{s}$ to 0, the globally coupled macro scale problem is defined.
+so that with setting $\delta \boldsymbol u^\text{s}, \delta \boldsymbol \mu^\text{s}, \delta \boldsymbol \mu^\text{s}$ to 0, the globally coupled macro scale problem is defined.
 
 
 ## Weak Format Macro Scale
@@ -63,7 +63,7 @@ so that with setting $\delta \boldsymbol u^{s}, \delta \boldsymbol \mu^{s}, \del
 &\
 \forall \delta \bar{\boldsymbol u} \in \bar{\mathbb{U}}^{0}
 \\
-\int_{\Omega} \dot{\bar{\boldsymbol c}} \ \delta \bar{\boldsymbol \mu} \ d\Omega - \int_{\Omega} (\bar{\boldsymbol j} - \dot{\bar{\boldsymbol c}}_{2}) \cdot \boldsymbol \nabla[\delta \bar{\boldsymbol \mu}] \ d\Omega
+\int_{\Omega} \dot{\bar{\boldsymbol c}} \ \delta \bar{\boldsymbol \mu} \ d\Omega - \int_{\Omega} (\bar{\boldsymbol j} - \dot{\bar{\boldsymbol c}}_\text{2}) \cdot \boldsymbol \nabla[\delta \bar{\boldsymbol \mu}] \ d\Omega
 &=  \int_{\Gamma_N^{(\mu)}} \boldsymbol h^\text{p} \delta \bar{\boldsymbol \mu} \ d\Gamma
 &\
 \forall \delta \bar{\boldsymbol \mu} \in \bar{\mathbb{M}}^{0}
@@ -97,15 +97,15 @@ While fully adapting the micro structural details from fine scale problem identi
 ```
 
 ## Time Stepping
-For every time step the RVE problem is going to be solved at the corresponding quadrature point. The four variationally consistent macro scale fields are updated using new RVE results at current time step. New stiffness matrix $\boldsymbol K^{n}$ is then computed with the new variationally consistent macro scale fields. A time dependent boundary condition is applied on both $\boldsymbol K^{n}$ and $\boldsymbol f^{n}$.
+For every time step the RVE problem is going to be solved at the corresponding quadrature point. The four variationally consistent macro scale fields are updated using new RVE results at current time step. New stiffness matrix $\boldsymbol K^\text{n}$ is then computed with the new variationally consistent macro scale fields. A time dependent boundary condition is applied on both $\boldsymbol K^\text{n}$ and $\boldsymbol f^\text{n}$.
 
 ```math
 \begin{align}
 
-\boldsymbol K^{n}(\bar{\boldsymbol \sigma}^{n}, 
-    \bar{\boldsymbol j}^{n}, \bar{\boldsymbol c}^{n}, \bar{\boldsymbol c_{2}}^{n}) \boldsymbol a^\text{n} &= \boldsymbol f^{n}
+\boldsymbol K^\text{n}(\bar{\boldsymbol \sigma}^\text{n}, 
+    \bar{\boldsymbol j}^\text{n}, \bar{\boldsymbol c}^\text{n}, \bar{\boldsymbol c_\text{2}}^{n}) \boldsymbol a^\text{n} &= \boldsymbol f^\text{n}
 \\
-\boldsymbol a^{n} &= (\boldsymbol K^{n})^{-1} \boldsymbol f^{n}
+\boldsymbol a^\text{n} &= (\boldsymbol K^\text{n})^\text{-1} \boldsymbol f^\text{n}
 
 \end{align}
 ```

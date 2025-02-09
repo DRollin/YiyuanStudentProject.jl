@@ -67,6 +67,9 @@ end
 # Run the simulation
 example(1e-6, 1e-5)
 #
+# A visualization of the results from both sub scale and macro scale along the time is possible by passing the function ``animated_combined_result``. An example is shown as follows.
+# 
+#
 # 
 
 #md # ## [Plain program](@id example_1-plain-program)

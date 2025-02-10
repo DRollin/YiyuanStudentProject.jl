@@ -1,18 +1,19 @@
 """
    add_macro_bc!(ch::ConstraintHandler, grid::Grid{3}, Δt)
 
-Add a time dependent dirichlet boundary condition for the macro scale unknown fields respectively on the left `∂Ωₗ` and right `∂Ωᵣ` boundary facet, 
-which are defined passing function ``getfacetset``. 
+Add a time dependent dirichlet boundary condition for the macro scale unknown fields respectively on the possible facet `∂Ω1` and `∂Ω2`.
+
+Apply time dependent boundary condition on both unknown fields `u` and `μ`.
 
 """
-function add_macro_bc!(ch::ConstraintHandler, grid::Grid{3}, Δt)
-	∂Ωₗ = getfacetset(grid, "left") 
-    ∂Ωᵣ = getfacetset(grid, "right")
+function add_macro_bc!(ch::ConstraintHandler, grid::Grid{3}, Δt, bc::MacroBCParams)
+	∂Ω1 = getfacetset(grid, bc.facetset_1) 
+    ∂Ω2 = getfacetset(grid, bc.facetset_2)
 	ramp(t) = t < 10*Δt ? t/(10*Δt) : 1.0
-    add!(ch, Dirichlet(:u, ∂Ωₗ, (x,t) -> ramp(t)*Vec{3}((0.01, 0.0, 0.0)) ))
-    add!(ch, Dirichlet(:u, ∂Ωᵣ, (x,t) -> Vec{3}((0.0, 0.0, 0.0)) ))
-    add!(ch, Dirichlet(:μ, ∂Ωₗ, (x,t) -> ramp(t)*1.0))
-    add!(ch, Dirichlet(:μ, ∂Ωᵣ, (x,t) -> 0.0)) 
+    add!(ch, Dirichlet(:u, ∂Ω1, (x,t) -> ramp(t)*bc.u_1 ))
+    add!(ch, Dirichlet(:u, ∂Ω2, (x,t) -> ramp(t)*bc.u_2))
+    add!(ch, Dirichlet(:μ, ∂Ω1, (x,t) -> ramp(t)*bc.μ_1))
+    add!(ch, Dirichlet(:μ, ∂Ω2, (x,t) -> ramp(t)*bc.μ_2)) 
 	return ch
 end
 
@@ -48,9 +49,9 @@ Create the necessary data storage ``GaussPointData`` for each gauss point in mac
 
 A ``AssemblySetup`` for elementweise assembly and ``SolveSetup`` for the final solving of the time dependent problem are prepared.
 """
-function prepare_macro_setup(grid::Grid{dim}, rvesetup::RVESetup{dim}, Δt) where {dim}
+function prepare_macro_setup(grid::Grid{dim,C}, rvesetup::RVESetup{dim}, rve::RVE{dim}, Δt, bc::MacroBCParams) where {dim,C}
 	@info "Preparing Macro setup"
-    refshape   = _get_ref_shape(Val(dim))
+    refshape = getrefshape(C)
 		
 	ip = (u = Lagrange{refshape,1}()^dim,
 	      μ = Lagrange{refshape,1}())
@@ -70,7 +71,7 @@ function prepare_macro_setup(grid::Grid{dim}, rvesetup::RVESetup{dim}, Δt) wher
 
 
     ch = ConstraintHandler(dh)
-    add_macro_bc!(ch, grid, Δt)
+    add_macro_bc!(ch, grid, Δt, bc)
 	close!(ch)
 
     Kₑ = zeros(sum(nbf), sum(nbf))      
@@ -89,7 +90,8 @@ function prepare_macro_setup(grid::Grid{dim}, rvesetup::RVESetup{dim}, Δt) wher
 	f = zeros(ndofs(dh))
 	aⁿ = deepcopy(f)
 
-	fill!(rvesetup.aⁿ, 0.0)
+	apply_analytical!(aⁿ, dh, :μ, (x -> rve.M.μʳᵉᶠ), 1:getncells(grid))
+
     data = [[ GaussPointData(rvesetup.aⁿ, 0.0, zero(Tensor{1,dim}))
                 for j in 1:getnquadpoints(cv.u)]
                 for i in 1:length(grid.cells)]

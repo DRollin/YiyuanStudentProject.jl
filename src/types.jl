@@ -201,3 +201,24 @@ struct SolveSetup{dim}
     f::Vector{Float64}
     aⁿ::Vector{Float64}
 end
+
+
+"""
+    MacroBCParams
+
+A `MacroBCParams` contains the possible boundary condition for the macro scale problem:
+- `u_1`:           the total boundary condition for unknown field `u` on facet 1,
+- `u_2`:           the total boundary condition for unknown field `u` on facet 2,
+- `μ_1`:           the total boundary condition for unknown field `μ` on facet 1, 
+- `μ_2`:           the total boundary condition for unknown field `μ` on facet 2,
+- `facetset_1`:    possible facet 1 for applying boundary condition,  
+- `facetset_2`:    possible facet 1 for applying boundary condition.        
+"""
+struct MacroBCParams
+    u_1::Vector{Float64}
+    u_2::Vector{Float64}
+    μ_1::Float64
+    μ_2::Float64
+    facetset_1::String
+    facetset_2::String
+end

@@ -98,7 +98,7 @@ function _prepare_plots!(pos, res::NamedTuple, setup::SolveSetup{dim};
     subpos = pos[2,2]
     μ = Makie.@lift evaluate_at_grid_nodes(dh, $(aᵒᵇˢ), :μ)
     ax = Makie.Axis3(subpos[1,1], aspect=:equal, title="chemical potential")
-    colorsettings = (colorrange=(μ_min, μ_max), colormap=:viridis)
+    colorsettings = (colorrange=(0.0, 1.0), colormap=:viridis)
     Makie.mesh!(ax, mesh; color=μ, colorsettings..., shading=Makie.NoShading)
     Makie.Colorbar(subpos[1,2]; colorsettings...)
 

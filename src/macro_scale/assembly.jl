@@ -77,18 +77,19 @@ function assemble_macro_element!(setup::AssemblySetup{dim}, Δt, gpdata::Vector{
     for qp in 1:getnquadpoints(cv.u)
         dΩ = getdetJdV(cv.u, qp)
 
+        ū = function_value(cv.u, qp, uₑ)
         μ̄ = function_value(cv.μ, qp, μₑ)
         ζ̄ = function_gradient(cv.μ, qp, μₑ)
         ε̄ = function_symmetric_gradient(cv.u, qp, uₑ)
 
         load = LoadCase{dim}(ε̄, μ̄, ζ̄)
 
-        σ̄, ċ, ċ₂, j̄,  = compute_effective_response!(gpdata[qp], rvesetup, load, Δt)
+        σ̄, ċ, ċ₂, j̄  = compute_effective_response!(gpdata[qp], rvesetup, load, Δt)
 
         for i in 1:nbf.u
             δNϵi = shape_symmetric_gradient(cv.u, qp, i)
             for j in 1:nbf.u
-                Kₑuu[i,j] += (δNϵi ⊡ σ̄  ) * dΩ
+                Kₑuu[i,j] += (δNϵi ⊡ σ̄  ) * dΩ / nbf.u
             end
         end
 
@@ -96,7 +97,7 @@ function assemble_macro_element!(setup::AssemblySetup{dim}, Δt, gpdata::Vector{
             δN∇μi = shape_gradient(cv.μ, qp, i)
             δNμi = shape_value(cv.μ, qp, i)
             for j in 1:nbf.μ
-                Kₑμμ[i,j] += (δNμi * ċ - δN∇μi ⋅ (ċ₂ - j̄) ) * dΩ
+                Kₑμμ[i,j] += (δNμi * ċ - δN∇μi ⋅ (ċ₂ - j̄) ) * dΩ / nbf.μ
             end
         end
     end

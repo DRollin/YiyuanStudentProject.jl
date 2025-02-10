@@ -68,7 +68,7 @@ $\boldsymbol \psi (\boldsymbol \varepsilon, \boldsymbol c) = \boldsymbol \psi^\t
 
 Furthermore, a constant mobility tensor $\boldsymbol M$ for the assumption of a linear relation between ion flux and the gradient of
 the chemical potential is defined using a mobility coefficient $\boldsymbol \eta$ for the isotropic case such as in this project.
-A reference temperature $\boldsymbol \theta_\text{ref}$ and the concentration $\boldsymbol c_\text{ref}$ as well as the reference chemical potential $\boldsymbol \mu_\text{ref}$ are gloable constant material parameters for the purpose of linearization. 
+A reference temperature $\boldsymbol \theta_\text{ref}$ and the concentration $\boldsymbol c_\text{ref}$ as well as the reference chemical potential $\boldsymbol \mu_\text{ref}$ are gloable constant material parameters for the purpose of linearization. $\boldsymbol c_\text{m}$ is an auxiliary parameter.
 So that the simplified constitutive equations are:
 
 ```math

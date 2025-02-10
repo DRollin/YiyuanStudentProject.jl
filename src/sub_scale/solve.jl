@@ -25,7 +25,7 @@ function compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) wher
 	close!(ch)
         # .nzval assures that structural zeros are NOT dropped (-> needed to apply constraints)
     g .= Δt .* f .+ (M .- K .* Δt ./ 2) * aⁿ
-    J.nzval .= M.nzval .+ K.nzval .* Δt ./ 2 #.+ 1e-10)
+    J.nzval .= M.nzval .+ K.nzval .* Δt ./ 2
     apply!(J, g, ch) 
     aⁿ⁺¹ .= J \ g
     apply!(aⁿ⁺¹, ch) 

@@ -4,18 +4,18 @@
 
 ### Right hand side vector for RVE
 
-Not obivous but with introducting the reference values $\boldsymbol c_\text{ref}$ and $\boldsymbol \mu_\text{ref}$ the following parts from the weak form only multiply the test shape function and can be moved to the right hand side:
+Not obivous but with introducting the reference values $ c_\text{ref}$ and $ \mu_\text{ref}$ the following parts from the weak form only multiply the test shape function and can be moved to the right hand side:
 ```math
 \begin{align}
-f_\text{e}u &= \int_{\Omega} - \delta \boldsymbol \varepsilon : \boldsymbol E : \boldsymbol \alpha^\text{ch} * \boldsymbol c _\text{ref} \ d\Omega  
+f_\text{eu} &= \int_{\Omega} - \delta \boldsymbol \varepsilon : \boldsymbol E : \boldsymbol \alpha^\text{ch}  c _\text{ref} \ d\Omega  
 \\
-f_\text{e}c &= \int_{\Omega} \delta c * (\mu _\text{ref} - (k + \alpha^\text{ch} : \boldsymbol E : \alpha^\text{ch} )) *  \boldsymbol c _\text{ref} \ d\Omega
+f_\text{ec} &= \int_{\Omega} \delta c  (\mu _\text{ref} - (\frac{ R  \theta_\text{ref}}{ c_\text{m}} + \alpha^\text{ch} : \boldsymbol E : \alpha^\text{ch} ))  c _\text{ref} \ d\Omega
 \end{align}
 ```
 
 ### Implicit RVE boundary condition update
 
-The RVE Boundary condition adapts the corresponding quadrature point value on macro scale and this can not be directly explictly defined on sub scale. Therefore, for every time step the new boundary condition value need to be updated before solving for the new result vector.
+The RVE Boundary condition can not be directly explictly defined on sub scale. It needs to be renewed at every time step from corresponding macro scale quadrature point.
 
 ![alt text](BC.png)
 
@@ -23,7 +23,9 @@ The RVE Boundary condition adapts the corresponding quadrature point value on ma
 
 ### Consistent initial guesses
 
-The initial guess for chemical potential $\boldsymbol \mu$ and ion concentration $\boldsymbol c$ on both macro scale and sub scale need to be equal to the given reference values $\boldsymbol c_\text{ref}$ and $\boldsymbol \mu_\text{ref}$. Addition to this, the inital macro scale boundary condition and inital solution guess should align.
+To ensure consistency, the initial guess for chemical potential $ \mu$ and ion concentration $ c$ on both macro scale and sub scale need to be equal to the given reference values $ c_\text{ref}$ and $ \mu_\text{ref}$. Furthermore, the initial macro-scale boundary condition should correspond with the initial solution guess.
+
+TODO the rest!!!!!!!!!!!!!
 
 
 ### Result storage throughout the time stepping

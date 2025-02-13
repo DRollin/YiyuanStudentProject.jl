@@ -2,7 +2,7 @@
 CurrentModule = YiyuanStudentProject
 ```
 
-# Macro scale
+# Macro Scale
 
 ```@docs
 prepare_macro_setup

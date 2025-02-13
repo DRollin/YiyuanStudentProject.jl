@@ -22,6 +22,7 @@ makedocs(;
         canonical="https://github.com/DRollin/YiyuanStudentProject.jl.git",
         edit_link="main",
         assets=String["assets/citations.css"],
+        mathengine = Documenter.MathJax(Dict(:TeX => Dict(:equationNumbers => Dict(:autoNumber => "AMS")))),
     ),
     pages=[
         "Home" => "index.md",

@@ -30,7 +30,7 @@ function sub_scale_pre()
     ϕ = 0.3
     meshsize = 0.1
     grid = generate_rve_grid(; ϕ=ϕ, d=d, meshsize=meshsize, dx=(1.0, 1.0, 1.0))
-    return grid
+    return grid, P, M
 end
 # ### Macro Scale
 # Setting up the grid parameters and generate a macro scale grid. 
@@ -53,7 +53,7 @@ end
 # Solve the time dependent problem macro scale problem. A corresponding RVE would be solved at each quadrature point in macro scale problem. 
 #
 # A visualization of results from both fine scale and macro scale problem can use `animate_combined_result`
-function solve(grid_rve, grid_macro, Δt, t_total)
+function solve(grid_rve, P, M, grid_macro, Δt, t_total)
     rve = RVE(grid_rve, P, M)
     setup_rve = prepare_setup(rve)
     assemble_K_M_f!(setup_rve)
@@ -62,11 +62,11 @@ function solve(grid_rve, grid_macro, Δt, t_total)
 end
 # Construct the main function
 function example()
-    grid_rve = sub_scale_pre()
+    grid_rve, P, M = sub_scale_pre()
     grid_macro = macro_scale_pre()
     Δt = 1e-6
     t_total = 1e-5
-    solve(grid_rve, grid_macro, Δt, t_total)
+    solve(grid_rve, P, M, grid_macro, Δt, t_total)
 end
 # Run the simulation
 example()

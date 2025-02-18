@@ -14,7 +14,7 @@ The running averaging operator for a quantity $\diamond$  is denoted for volume 
 
 ```math
 \begin{align}
-\langle \diamond \rangle _{\square} &:= \frac{1}{| \Omega _{\square}|} \int_{{\boldsymbol \Omega} _{\square}} \diamond \ d  \Omega
+\langle \diamond \rangle _{\square} &:= \frac{1}{| \Omega _{\square}|} \int_{{ \Omega} _{\square}} \diamond \ d  \Omega
 
 \\
 \langle \langle \diamond \rangle \rangle _{\square} &:= \frac{1}{|\boldsymbol \Gamma _{\square}|} \int_{{\boldsymbol \Gamma} _{\square}} \diamond \ d \boldsymbol \Gamma
@@ -29,11 +29,11 @@ Thus, using first order Taylor expension (linear variation) the homogenized fiel
 
 ```math
 \begin{align}
-\boldsymbol u^\text{M}[\bar{\boldsymbol u}](\bar{\boldsymbol x}, \boldsymbol x ) &= \bar{\boldsymbol u}(\bar{\boldsymbol x}) + \bar{\boldsymbol \xi}(\bar{\boldsymbol x}) \cdot [x - \bar{\boldsymbol x}], \ \ \bar{\boldsymbol \xi} := \bar{\boldsymbol u}  \otimes \boldsymbol \nabla, & \ x \in \boldsymbol \Omega_\square
+\boldsymbol u^\text{M}[\bar{\boldsymbol u}](\bar{\boldsymbol x}, \boldsymbol x ) &= \bar{\boldsymbol u}(\bar{\boldsymbol x}) + \bar{\boldsymbol \xi}(\bar{\boldsymbol x}) \cdot [x - \bar{\boldsymbol x}], \ \ \bar{\boldsymbol \xi} := \bar{\boldsymbol u}  \otimes \boldsymbol \nabla, & \ \boldsymbol x \in  \Omega_\square
 
 \\
 
-\boldsymbol \mu^\text{M}[\bar{\boldsymbol \mu}](\bar{\boldsymbol x}, \boldsymbol x ) &= \bar{\boldsymbol \mu}(\bar{\boldsymbol x}) + \bar{\boldsymbol \zeta}(\bar{\boldsymbol x}) \cdot [x - \bar{\boldsymbol x}], \ \ \bar{\boldsymbol \zeta} := \boldsymbol \nabla \bar{\boldsymbol \mu}  , & \ x \in \boldsymbol \Omega_\square
+\boldsymbol \mu^\text{M}[\bar{\boldsymbol \mu}](\bar{\boldsymbol x}, \boldsymbol x ) &= \bar{\boldsymbol \mu}(\bar{\boldsymbol x}) + \bar{\boldsymbol \zeta}(\bar{\boldsymbol x}) \cdot [x - \bar{\boldsymbol x}], \ \ \bar{\boldsymbol \zeta} := \boldsymbol \nabla \bar{\boldsymbol \mu}  , & \ x \in \Omega_\square
 \end{align}
 ```
 where $\bar{\boldsymbol x}$ is centriod and also holds to the upscaling rules mentioned earlier.
@@ -43,12 +43,12 @@ After inserting the hierarchical decomposition $\boldsymbol u = \boldsymbol u ^\
 
 ```math
 \begin{align}
-\int_{\Omega} \langle \boldsymbol \sigma (\boldsymbol \varepsilon[\boldsymbol u ^{M}[\bar {\boldsymbol u}] + \boldsymbol u ^\text{s}],\boldsymbol c ^\text{s}) : \boldsymbol \varepsilon[\boldsymbol u ^{M}[ \delta \bar {\boldsymbol u} ]+ \delta\boldsymbol u ^\text{s}] \rangle _\square \ d\Omega  &=  \int_{\Gamma_N^\text{(u)}} \boldsymbol t^\text{p} \cdot \delta \bar{\boldsymbol u} \ d\Gamma
+\int_{\Omega} \langle \boldsymbol \sigma (\boldsymbol \varepsilon[\boldsymbol u ^{M}[\bar {\boldsymbol u}] + \boldsymbol u ^\text{s}],\boldsymbol c ^\text{s}) : \boldsymbol \varepsilon[\boldsymbol u ^{M}[ \delta \bar {\boldsymbol u} ]+ \delta\boldsymbol u ^\text{s}] \rangle _\square \ d\Omega  &=  \int_{\boldsymbol \Gamma_N^\text{(u)}} \boldsymbol t^\text{p} \cdot \delta \bar{\boldsymbol u} \ d\boldsymbol \Gamma
 &\
 \forall \delta (\bar{\boldsymbol u}, {\boldsymbol u} ^\text{s}) &\in \bar {\mathbb{U}}^\text{0} \oplus \mathbb U ^\text{s}
 \\
 \int_{\Omega} \langle \dot{\boldsymbol c} ^\text{s} \ [\mu ^\text{M} [\delta \bar{\boldsymbol \mu}] + \delta\mu^\text{s}] \rangle _\square \ d\Omega - \int_{\Omega} \boldsymbol \langle j(\boldsymbol \nabla[\mu ^\text{M} [\bar{\boldsymbol \mu}] + \mu^\text{s}]) \cdot \boldsymbol \nabla[\mu ^\text{M} [\delta \bar{\boldsymbol \mu}] + \delta\mu^\text{s}] \rangle _\square \ d\Omega
-&=  \int_{\Gamma_N^{\mu}} \boldsymbol h^\text{p} \delta \bar{\boldsymbol \mu} \ d\Gamma
+&=  \int_{\boldsymbol \Gamma_N^{\mu}} \boldsymbol h^\text{p} \delta \bar{\boldsymbol \mu} \ d\boldsymbol \Gamma
 &\
 \forall \delta (\bar{\boldsymbol \mu}, {\boldsymbol \mu} ^\text{s}) &\in \bar {\mathbb{M}}^\text{0} \oplus \mathbb M ^\text{s}
 \\
@@ -64,14 +64,14 @@ By with setting $\delta \boldsymbol u^\text{s}, \delta \boldsymbol \mu^\text{s},
 
 ```math
 \begin{align}
-\int_{\Omega} \bar{\boldsymbol \sigma} : \boldsymbol \varepsilon[\delta \bar{\boldsymbol u}] \ d\Omega  &=  \int_{\Gamma_N^{(u)}} \boldsymbol t^\text{p} \cdot \delta \bar{\boldsymbol u} \ d\Gamma
+\int_{\Omega} \bar{\boldsymbol \sigma} : \boldsymbol \varepsilon[\delta \bar{\boldsymbol u}] \ d\Omega  &=  \int_{\boldsymbol \Gamma_N^{(u)}} \boldsymbol t^\text{p} \cdot \delta \bar{\boldsymbol u} \ d\boldsymbol \Gamma
 &\
 \forall \delta \bar{\boldsymbol u} \in \bar{\mathbb{U}}^{0}
 \\
-\int_{\Omega} \dot{\bar{ c}} \ \delta \bar{ \mu} \ d\Omega - \int_{\Omega} (\bar{\boldsymbol j} - \dot{\bar{ \boldsymbol c}}_\text{2}) \cdot \boldsymbol \nabla[\delta \bar{ \mu}] \ d\Omega
-&=  \int_{\Gamma_N^{(\mu)}} \boldsymbol h^\text{p} \delta \bar{\boldsymbol \mu} \ d\Gamma
+\int_{\Omega} \dot{\bar{ c}} \ \delta \bar{ \mu} \ d\Omega - \int_{\Omega} (\bar{\boldsymbol j} - \dot{\bar{  c}}_\text{2}) \cdot \boldsymbol \nabla[\delta \bar{ \mu}] \ d\Omega
+&=  \int_{\boldsymbol \Gamma_N^{(\mu)}} \boldsymbol h^\text{p} \delta \bar{ \mu} \ d\boldsymbol \Gamma
 &\
-\forall \delta \bar{\boldsymbol \mu} \in \bar{\mathbb{M}}^{0}
+\forall \delta \bar{ \mu} \in \bar{\mathbb{M}}^{0}
 \end{align}
 ```
 
@@ -89,20 +89,24 @@ with the variationally consistent macro scale homogenized fields:
 \end{align}
 ```
 ## Boundary Condition RVE
-When fully adapting the microstructural details from the fine-scale problem at each macro-scale quadrature point, a consistent boundary condition must be established to ensure a uniquely solvable RVE problem: (TODO!!!!!!!!!!)
+When fully adapting the microstructural details from the fine-scale problem at each macro-scale quadrature point, a consistent boundary condition must be established to align the two scales: 
 
 ```math
 \begin{align}
-    \bar{\boldsymbol \varepsilon} &:= \langle \langle \boldsymbol \varepsilon \rangle \rangle _\square 
+    \boldsymbol u &= \bar{\boldsymbol u} + \bar{\boldsymbol \varepsilon} [\boldsymbol x - \bar{\boldsymbol x}]
+    &\
+    \text{on} \  \boldsymbol \Gamma_{D}^{(u)}
 \\
-    \bar{\boldsymbol \mu} &:= \langle \langle \boldsymbol \mu \rangle \rangle _\square
-\\
-    \bar{\boldsymbol \zeta} &:= \langle \langle \boldsymbol \zeta \rangle \rangle _\square
+     \mu &= \bar{\mu} + \bar{\boldsymbol \zeta} [\boldsymbol x - \bar{\boldsymbol x}]
+     &\
+    \text{on} \  \boldsymbol \Gamma_{D}^{(\mu)}
+
 \end{align}
 ```
+Due to rigid body translation there is no resulting sub scale stress from macro scale deformation $\bar{\boldsymbol u}$. Therefore, for convenience $\bar{\boldsymbol u}$ can be negligible.
 
 ## Time Stepping
-For every time step; the RVE problem is going to be solved at the corresponding quadrature point. The four variationally consistent macro scale fields are updated using new RVE results at current time. New stiffness matrix $\boldsymbol K^\text{n}$ is then computed with the new variationally consistent macro scale fields. A time dependent boundary condition is applied on both $\boldsymbol K^\text{n}$ and $\boldsymbol f^\text{n}$.
+For every time step, the RVE problem is going to be solved at the corresponding quadrature point. The four variationally consistent macro scale fields are updated using new RVE results at current time. New stiffness matrix $\boldsymbol K^\text{n}$ is then computed with the new variationally consistent macro scale fields. A time dependent boundary condition is applied on both $\boldsymbol K^\text{n}$ and $\boldsymbol f^\text{n}$.
 
 ```math
 \begin{align}

@@ -25,19 +25,18 @@ The RVE Boundary condition can not be directly explictly defined on sub scale. I
 
 To ensure consistency, the initial guess for chemical potential $ \mu$ and ion concentration $ c$ on both macro scale and sub scale need to be equal to the given reference values $ c_\text{ref}$ and $ \mu_\text{ref}$. Furthermore, the initial macro-scale boundary condition should correspond with the initial solution guess.
 
-TODO the rest!!!!!!!!!!!!!
 
 
 ### Result storage throughout the time stepping
 
-An object ``GaussPointData`` is used for the storage to ensure a direct calculation of $\bar{\boldsymbol \sigma}$, $\bar{\boldsymbol j}$, $\dot{\bar{\boldsymbol c_\text{2}}}$, $\dot{\bar{\boldsymbol c}}$.
+An object ``GaussPointData`` is used as buffer to ensure a direct calculation of $\bar{\boldsymbol \sigma}$, $\bar{\boldsymbol j}$, $\dot{\bar{\boldsymbol c_\text{2}}}$, $\dot{\bar{\boldsymbol c}}$.
 
 All the macro scale result vectors and sub scale result vector at one certain quadrature point throughout the time stepping are stored in a ``NamedTuple`` respectively. 
 
 
 ### Combined animated plotting
 
-Using ``observables`` from ``Makie.jl`` to create an animation for the time depenedent results. The location of the reference RVE is specified in the macro scale undeformed grid. Identical color bar for the chemical potential on both macro and sub scale to ensure a easier visual comparison.
+Using ``observables`` from ``Makie.jl`` an animation for the time depenedent results can be created. The location of the reference RVE is specified in the macro scale undeformed grid. Identical color bar for the chemical potential on both macro and sub scale is used to ensure an easier visual comparison.
 
 
 
@@ -47,30 +46,28 @@ Using ``observables`` from ``Makie.jl`` to create an animation for the time depe
 
 ### Delayed adapting of RVE BC from macro scale
 
-As it shown in the following figures, a result at the last time step `1e-5` with a time step size `1e-6`, for the reference quadrature point `cell[1]qp[1]` a chemical potential of approximately 0.5 is shown as it is in color blue. For the RVE boundary however, a blue color with a purple tone is displayed which matches the macro scale chemical potential at time step `7e-6`.
+As it shown in the following figures, for the reference quadrature point `cell[1]qp[1]`, a macro scale chemical potential of approximately `0.5` is reached at time  `t = 1e-5`. For the RVE boundary however, a lower chemical potential of `0.25` is displayed. This value matches the corresponding macro scale chemical potential at time `t = 7e-6`
 
 ![alt text](results_one_element_t_1e-5.png)
-*Fig. 2*: Results for both macro scale and sub scale at time step 1e-5.
+*Fig. 2*: Results for both macro scale and RVE at time step 1e-5.
 
 ![alt text](results_one_element_t_7e-6.png)
-*Fig. 3*: Results for both macro scale and sub scale at time step 7e-6.
+*Fig. 3*: Results for both macro scale and RVE at time step 7e-6.
 
 #### Possible cause
 - Plotting issue: Since `Makie.jl` only plots the values on element nodes and due to the linearity of the problem, a linear gradient is generated without considering the actual quadrature point data.
 
 ### Problematic results with increasing elements in macro scale grid 
 
-With a macro scale grid with more than one element in each direction, the results are totally unreasonable:
+With a macro scale grid with more than one element in each direction, the results are unreasonable:
 
 ![](Myresult_two_elements.mp4)
 
 
-#### Possible cause
-- wrong conditioned direct upscaling.
 
 
 
 ### Limited flexibility on RVE boundary
 
-Due to unsolved technical issues dirichlet boundary condition is prescribed for RVE. Unlike Periodic boundary condition this overconstrains the RVE.
+Due to unsolved technical issues Dirichlet boundary conditions are used for RVE problem. A Periodic boundary condition is more desirable.
 

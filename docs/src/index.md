@@ -8,7 +8,7 @@ Documentation for [YiyuanStudentProject.jl](https://github.com/DRollin/YiyuanStu
 
 ## Introduction
 
-The aim of this project is to develop and implement a linear transient chemo-mechanical multi-scale model within the FE²-framework. 
+The aim of this project is to develop and implement a linear transient chemo-mechanical multi-scale model within the FE²-framework. Representitive Volumen Element (RVE) with fully resolved material microstructure is established on the sub scale, whereby a homogeneous macro scale is prescribed with the corresponding sub scale information.
 
 As indicated by the name, a chemo-mechanical problem refers to the situation where transport of chemical species and mechanical change (e.i. deformation) are coupled. Such problems are common in various fields, including battery science. Thus, a lithium-ion structural battery problem is discussed in this project, where the deformation and ion concentration have an influence on the chemical potential.
 

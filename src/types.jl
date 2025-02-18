@@ -29,14 +29,14 @@ function Material{dim}(; G::T, K::T, η::T, cʳᵉᶠ::T, μʳᵉᶠ::T, θʳᵉ
 end
 
 """
-    [RVE{dim}](@ref)
+    RVE{dim}
 
 A ``RVE`` is defined by a geometry and material characteristic of constituents that contains
 - `grid`:       a Grid for the prescribed RVE,
 - `P`:          Material type for partical constraints,
 - `M`:          Material type for matrix.
 
-The type can be created by calling the funtion `RVE(; grid::Grid{dim}, materials::NamedTuple{(:P,:M),Tuple{Material{dim}, Material{dim}}}) where {dim}`
+An object can be created by calling the funtion `RVE(; grid::Grid{dim}, materials::NamedTuple{(:P,:M),Tuple{Material{dim}, Material{dim}}}) where {dim}`
 """
 struct RVE{dim}
     grid::Grid{dim}
@@ -51,11 +51,13 @@ end
     LoadCase{dim}
 
 A `LoadCase` defines the macro scale quantities imposed on RVE as loading
-- `ε̄`:          averaging external strain tensor,
-- `μ̄`:          averaging chemical potantial on the boundary,
+- `ε̄`:          average external strain tensor,
+- `μ̄`:          average chemical potantial on the boundary,
 - `ζ̄`          gradient of the averaging chemical potantial on the boundary.
 
 To create a ``LoadCase`` by defining only the non-zero tensor components the constructor `LoadCase(dim::Int; kwargs...)` can be used.
+In case of a 2D problem, arguments like `ε̄₁₁`, `ε̄₁₂`, `ε̄₂₂`, `μ̄ `, `ζ̄₁`, `ζ̄₂` are prescribed.
+For 3D cases, the corresponding arguments are `ε̄₁₁`, `ε̄₁₂`, `ε̄₁₃` `ε̄₂₃`, ε̄₂₂`, `ε̄₃₃`, `μ̄ `, `ζ̄₁`, `ζ̄₂`, `ζ̄₃`.
 """
 struct LoadCase{dim}
     ε̄::SymmetricTensor{2,dim,Float64}
@@ -90,7 +92,7 @@ end
 
 A `PhaseSetup` contains the relevant imformation for the element assembly:
 - `dh`:             ``DofHandler`` based on the given grid,
-- `cells`:          ordered cell set defining the phase domain,
+- `cells`:          cell set defining the phase domain,
 - `cv`:             ``CellValues`` in ``NamedTuple`` for each unknown field,
 - `nbf`:            number of base function in ``NamedTuple`` for the unknown fields,
 - `material`:       ``Material`` of the phase,
@@ -143,10 +145,10 @@ end
 
 """
     GaussPointData{dim}
-A mutable `GaussPointData` that prescribes and collects relevent datas from the corresponding RVE problem for each gauss point in macro scale problem:
+A mutable `GaussPointData` that stores relevent data from the RVE problem for the one corresponding gauss point in macro scale problem:
 - `aᵣᵥₑⁿ`:           the result vector from every rve problem, 
-- `c̄ⁿ`:              the average concentration (only flactuation) at current time step,
-- `c̄₂ⁿ`:              the average gradient of concentration (only flactuation) at current time step.
+- `c̄ⁿ`:              the average concentration at current time step,
+- `c̄₂ⁿ`:              the average moment of concentration at current time step.
 """
 mutable struct GaussPointData{dim}
     aᵣᵥₑⁿ::Vector{Float64}

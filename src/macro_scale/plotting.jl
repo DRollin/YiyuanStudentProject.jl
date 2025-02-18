@@ -1,22 +1,12 @@
 
 """
-    animate_macro_result(res::NamedTuple, setup::RVESetup{dim}, file_name::String="Myresult.mp4", n::Number)
+    animate_macro_result(res::NamedTuple, setup::SolveSetup{dim}; file_name ="Myresult.mp4", kwargs...) where {dim}
 
-Return an animation showing the evolution of the solution for a macro scale simulation.
+Return an mp4 file with name `file_name`, which by default is "Myresult.mp4". 
 
-# Arguments:
-- `res`:         A `NamedTuple` containing the simulation results
-- `setup`:       The setup object for the RVE simulation, containing: `grid` and `dh` fields
-- `file_name`:   The path and name of the output animation file (default: `"Myresult.mp4"`)
+This shows the evolution of the solution `res` for a macro scale simulation of a multi scale problem based on input `SolveSetup`. 
 
-# Implementation Details:
-Initialize a Makie figure with a size of `(1200, 800)`.
-
-Generate observables for `t` and `a` using `_prepare_plots!`.
-
-Record frames by iterating over the indices of `t` and updates the observables accordingly.
-
-Save the animation as an MP4 file.
+Further arguments like `scale` for visibel deformation can be used.
     
 """
 function animate_macro_result(res::NamedTuple, setup::SolveSetup{dim}; file_name ="Myresult.mp4", kwargs...) where {dim}
@@ -33,30 +23,12 @@ function animate_macro_result(res::NamedTuple, setup::SolveSetup{dim}; file_name
 end
 
 """
-    _prepare_plots!(pos, res::NamedTuple, setup::SolveSetup{dim}; 
-                    scale::Real=1.0, 
-                    titlestart::String="macroscale solution") where {dim}
+    _prepare_plots!(pos, res::NamedTuple, setup::SolveSetup{dim}; scale::Real=1.0, titlestart::String="macroscale solution") where {dim}
 
-    Sets up the necessary plots and observables `tᵒᵇˢ` and `aᵒᵇˢ` for visualizing macroscale simulation results: deformation, chemical potential.
+Sets up the necessary plots with a specified layout position `pos` and observables `tᵒᵇˢ` and `aᵒᵇˢ` to visualize the simulation results `res` of a multi scale problem `SolveSetup`:
+deformation `u`, chemical potential `μ`.
 
-# Arguments:
-- `pos`:    A layout position,
-- `res`:    A `NamedTuple` containing:
-    - `t`:      Time at each time step,
-    - `a`:      Result vector corresponding to the time.
-- `setup`: An object `SolveSetup`with the grid and degrees of freedom configuration.
-
-# Implementation Details:
-Generate the mesh representation both undeformed and deformed grid.
-
-Determine the boundary values of chemical potential `μ` across the grid nodes for all time steps.
-
-Create observables for time `tᵒᵇˢ` and data `aᵒᵇˢ`.
-    
-Prepare subplots for:
-    Undeformed grid with a static wireframe.
-    Deformed grid based on the scaled displacement field `u`.
-    Chemical potential using a color-mapped mesh and color bar.
+Optional arguments include a scaling factor `scale` for visualizing the deformation and a title `titlestart`. By default the `scale` is set to `1.0` and `titlestart` to `macroscale solution`.
 
 """
 function _prepare_plots!(pos, res::NamedTuple, setup::SolveSetup{dim};
@@ -107,24 +79,13 @@ end
 
 
 """
-    animate_macro_result(res::NamedTuple, setup::SolveSetup{dim}; file_name="Myresult.mp4", kwargs...) where {dim}
+    animate_combined_result(res::NamedTuple, resᵣᵥₑ::NamedTuple, setup::SolveSetup{dim}; file_name ="Myresult.mp4", scale=1.0) where {dim}
 
-Generates an MP4 animation of a time dependent macro-scale results using Makie.jl. 
+Return an mp4 file with name `file_name`, which by default is "Myresult.mp4". 
 
-# Arguments:
-- `res`:    A `NamedTuple` with the following fields:
-    - `t`:      Time at each time step,
-    - `a`:      Result vector corresponding to the time.
-- `setup`:  An `SolveSetup` that contains the problem configuration.
+This shows the evolution of the macro scale solution `res` and the RVE solution at a corresponding quadrature point `cell[1]qp[1]` for a multi scale simulation based on input `SolveSetup`.
 
-# Implementation Details:
-Initialize a Makie figure with a size of `(1200, 800)`.
-
-Generate observables for `t` and `a` as well as the `NamedTuple` observables `rve` using `_prepare_plots!`.
-
-Record frames by iterating over the indices of `t` and updates the observables accordingly.
-
-Save the animation as an MP4 file.
+Further arguments like `scale` for visibel deformation can be used, which by default is set to `1.0`.
 
 """
 function animate_combined_result(res::NamedTuple, resᵣᵥₑ::NamedTuple, setup::SolveSetup{dim}; file_name ="Myresult.mp4", scale=1.0) where {dim}

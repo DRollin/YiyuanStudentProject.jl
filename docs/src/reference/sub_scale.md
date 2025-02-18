@@ -2,7 +2,7 @@
 CurrentModule = YiyuanStudentProject
 ```
 
-# Sub scale
+# Sub Scale
 
 ```@docs
 generate_rve_grid

@@ -21,20 +21,7 @@ _prepare_plotable_mesh(grid::Grid{dim}, u::Vector{<:Vec{dim}}) where {dim} = _pr
 """
     plot_grid(grid::Grid{3})
 
-Ruturn a Makie.Figure to visualize a 3D finite element grid using the Makie plotting library.
-
-# Arguments:
-- `grid::Grid{3}`: A 3D grid object representing the finite element mesh to be visualized. 
-
-
-# Implementation Details:
-A plotable mesh is generated using `_prepare_plotable_mesh` and input `grid`
-
-Sets up a 3D axis `Axis3` with an equal aspect ratio and a title `undeformed grid`.
-
-Renders the grid as a solid mesh `Makie.mesh!` with a light blue color.
-
-Overlays the grid's edges as a wireframe `Makie.wireframe!` with black edges.
+Ruturn a Makie.Figure to visualize a given 3D finite element `grid` using the Makie plotting library.
 
 """
 function plot_grid(grid::Grid{3})
@@ -48,24 +35,14 @@ end
 
 
 """
-    animate_result(res::NamedTuple, setup::RVESetup{dim}, file_name::String="Myresult.mp4", n::Number)
+    animate_result(res::NamedTuple, setup::RVESetup{dim}, file_name::String="Myresult.mp4", kwargs...)
 
-Return an animation showing the evolution of the solution for a 3D RVE simulation.
+Return an mp4 file with name `file_name`, which by default is "Myresult.mp4". 
 
-# Arguments:
-- `res`:         A `NamedTuple` containing the simulation results
-- `setup`:       The setup object for the RVE simulation, containing: `grid` and `dh` fields
-- `file_name`:   The path and name of the output animation file (default: `"Myresult.mp4"`)
+This shows the evolution of the solution `res` for a 3D RVE simulation based on input `RVESetup`. 
 
-# Implementation Details:
-Initialize a Makie figure with a size of `(1200, 800)`.
-
-Generate observables for `t` and `a` using `_prepare_plots!`.
-
-Record frames by iterating over the indices of `t` and updates the observables accordingly.
-
-Save the animation as an MP4 file.
-    
+Further arguments like `scale` for visibel deformation can be used.
+   
 """
 function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myresult.mp4", kwargs...) where {dim}
     (; t, a) = res
@@ -84,32 +61,12 @@ function animate_result(res::NamedTuple, setup::RVESetup{dim}; file_name ="Myres
 end
 
 """
-   _prepare_plots!(pos, res::NamedTuple, setup::RVESetup{dim}; 
-                    scale::Real=1.0, 
-                    titlestart::String="RVE response") where {dim}
+    _prepare_plots!(pos, res::NamedTuple, setup::RVESetup{dim}; scale::Real=1.0, titlestart::String="RVE response") where {dim}
 
-    Sets up the necessary plots and observables `tᵒᵇˢ` and `aᵒᵇˢ` for visualizing macroscale simulation results: deformation, chemical potential, concentration.
+Sets up the necessary plots with a specified layout position `pos` and observables `tᵒᵇˢ` and `aᵒᵇˢ` to visualize the simulation results `res` of a RVE problem `RVESetup`:
+deformation `u`, chemical potential `μ`, concentration `c`. 
 
-# Arguments:
-- `pos`:    A layout position,
-- `res`:    A `NamedTuple` containing:
-    - `t`:      Time at each time step,
-    - `a`:      Result vector corresponding to the time.
-- `setup`: An object `SolveSetup`with the grid and degrees of freedom configuration.
-
-# Implementation Details:
-Generate the mesh representation both undeformed and deformed grid.
-
-Determine the boundary values of chemical potential `μ` and concentration `c` across the grid nodes for all time steps.
-
-Add sliced opening to show the internal strucature with particles and matrix with distinguished colors.
-
-Create observables for time `tᵒᵇˢ` and data `aᵒᵇˢ`.
-    
-Prepare subplots for:
-    Undeformed grid with a static wireframe.
-    Deformed grid based on the scaled displacement field `u`.
-    Chemical potential and concentration using a color-mapped mesh and color bar.
+Optional arguments include a scaling factor `scale` for visualizing the deformation and a title `titlestart`. By default the `scale` is set to `1.0` and `titlestart` to `RVE response`.
 
 """
 function _prepare_plots!(pos, res::NamedTuple, setup::RVESetup{dim};

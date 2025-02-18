@@ -1,5 +1,5 @@
 """
-   add_macro_bc!(ch::ConstraintHandler, grid::Grid{3}, Δt)
+	add_macro_bc!(ch::ConstraintHandler, grid::Grid{3}, Δt, bc::MacroBCParams)
 
 Add a time dependent dirichlet boundary condition for the macro scale unknown fields respectively on the possible facet `∂Ω1` and `∂Ω2`.
 
@@ -19,35 +19,18 @@ end
 
 
 """
-    prepare_macro_setup(grid::Grid{dim}, rvesetup::RVESetup{dim}, Δt) where {dim}
+    prepare_macro_setup(grid::Grid{dim,C}, rvesetup::RVESetup{dim}, rve::RVE{dim}, Δt, bc::MacroBCParams) where {dim,C}
 
 Return a `SolveSetup` object for the element-wise assembly and solving the time dependent macro scale problem. 
-	
-# Arguments:
-- `grid`:		prescribed macro scale grid with no distinguished phases,
-- `rvesetup`:	[RVESetup](@ref "RVE{dim}"),
-- `Δt`:			The time step size.
 
-# Implementation Details:
-The interpolation `ip` is defined by passing the corresponding `refshape` using the function `_get_ref_shape(Val(dim))`. 
+A initialized buffer `data` is created with the object `GaussPointData` at each integration point. 
 
-After the 'DofHandler' is created based on the `grid`, unknown fields can be added to it using `add!`
-By calling `close!` to finalize the construction. 
+The object `PhaseSetup` is created based on the given macro scale grid `grid`, the boundary condition `MacroBCParams` with the buffer `data`.
 
-Cellvallues are created for each discrete fields respectively passing quadrature rule with 3 integration points.
+With necessary parameters, initialized global matrix and vectors, and `PhaseSetup` the `SolveSetup` is computed.
 
-Number of base function for each unknown fields is defined using `getnbasefunctions`.
+Two unknown fields deformation `u`, chemical potential `μ` are prescribed for all cells.
 
-Calling function `add_bc!` to initialize the boundary conditions and associate this to the ``Dofhandler``.
-
-Local stiffness and solution vector are initialized. subarrays for locating the corresponding field interaction in element-wise by calling the macro `@view`.
-
-
-Global stiffness matrix, global right-hand side and global solution vector are initialized. For the stiffness matrix using `allocate_matrix` for a sparse matrix pattern.
-
-Create the necessary data storage ``GaussPointData`` for each gauss point in macro scale with the initialized solution vector from `RVESetup`, `0.0` for `c` concentration and `c₂` the gradient of concentration.
-
-A ``AssemblySetup`` for elementweise assembly and ``SolveSetup`` for the final solving of the time dependent problem are prepared.
 """
 function prepare_macro_setup(grid::Grid{dim,C}, rvesetup::RVESetup{dim}, rve::RVE{dim}, Δt, bc::MacroBCParams) where {dim,C}
 	@info "Preparing Macro setup"

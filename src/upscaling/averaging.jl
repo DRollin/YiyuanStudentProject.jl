@@ -1,19 +1,7 @@
 """
     average_quantities(a::Vector{Float64}, setup::RVESetup{dim}) where {dim}
 
-Computes the average quantities `σ̄``, `c̄`, `c̄₂`, `j̄` for a given solution vector `a` over the phase setups of an RVE. 
-
-# Arguments:
-- `a`:  Initialied or updated solution vector of the corresponding RVE problem,
-- `setup`: An object `RVESetup` for solving RVE problem
-
-# Implementation Details:
-Initialize the average quantities `σ̄``, `c̄`, `c̄₂`, `j̄`.
-
-For all cells update the cell values for all the unknown fields.
-
-For each quadrature point the element volume is computed. Furthermore for each base function in corresponding field,
-evaluate the value of `c` concentration, `ε` strain, `∇μ` the gradient of chemical potantial and `x` the spatial coordinate of the current quadrature point.
+Computes the average quantities `σ̄`, `c̄`, `c̄₂`, `j̄` for a given solution vector `a` over the phase setups of an RVE. 
 
 Then the macro scale consistent macro scale fields are computed as following:
 
@@ -68,25 +56,9 @@ end
 """
     compute_effective_response!(gpdata::GaussPointData{dim}, rvesetup::RVESetup{dim}, load::LoadCase{dim}, Δt) where {dim}
 
-Computes the effective response of a material at the macroscale using an RVE. This function updates the state variables in the `GaussPointData` and performs upscaling calculations.
+Computes the varialtionally consistent macro scale fields from an RVE at a macro scale Gauss Point. 
 
-# Arguments:
-- `gpdata`: An mutable object ``GaussPointData`` contains the state data,
-- `rvesetup`: An object ``RVESetup`` helping for RVE solving,
-- `load`: An object ``LoadCase`` as implicit boundary condition for RVE problem,
-- `Δt`: The time increment for the current time step.
-
-
-# Implementation Details:
-Update the aᵣᵥₑⁿ from `gpdata` to the aⁿ in `rvesetup`.
-
-Solve RVE problem at the current time step. Update the RVE solution in `gpdata`.
-
-Computes upscaled quantities (stress, concentration, flux, etc.) using the `average_quantities` function.
-
-Calculates the rates of change for concentration (`ċ`) and position-weighted concentration (`ċ₂`).
-    
-Updates `gpdata` with the newly computed averages.
+An RVE probelm is solved with given `RVESetup` and `LoadCase` for the new time step with time width `Δt`. State variables `aᵣᵥₑⁿ`, `c̄ⁿ`, `c̄₂ⁿ` from `GaussPointData` are updated.
 
 """
 function compute_effective_response!(gpdata::GaussPointData{dim}, rvesetup::RVESetup{dim}, load::LoadCase{dim}, Δt) where {dim}

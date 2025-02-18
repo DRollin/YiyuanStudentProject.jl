@@ -1,21 +1,12 @@
 """
     compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) 
 
-Compute the solution for the next time step in a Representative Volume Element (RVE) simulation using an implicit time integration scheme.
+Return the object `RVESetup` with updated next time step solution vector `aⁿ⁺¹`.
 
-# Arguments
-- `setup`:   RVESetup{dim}: The setup object containing parameters for the RVE simulation
-- `load`:    LoadCase{dim}: The load case specifying boundary conditions and external loads for the current time step.
-- `Δt`:      The time step size.
+Using Crank-Nicolson Method to compute the solution `aⁿ⁺¹`  in an implicit time stepping scheme for solving 
+the linear system in the next time step.
 
-
-# Implementation Details
-This function uses Crank-Nicolson Method to compute the solution in an implicit time stepping scheme for solving 
-the linear system in the next time step:
-
-The function applies boundary conditions to the system matrix and force vector using a constraint handler before solving 
-for the next time step solutions.
-
+New boundary condition values `LoadCase` are applied before for the next time step solutions.
 """
 function compute_time_step!(setup::RVESetup{dim}, load::LoadCase{dim}, Δt) where{dim}
     @info "Compute RVE time step"
@@ -36,15 +27,13 @@ end
 
 
 """
-    solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.25, t_total=1) where {dim}
+    solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.1, t_total=1) where {dim}
 
-For visualizing the fine scale problem results.
-Compute the results in a `NamedTuple` with fields `t` total time and `a` solution vector series contain `u` displacement, `μ` chemical potantial, 
-and `c` concentration for the whole time series with a certain time step width. 
+Return results throughout the time stepping process for visualizing the fine scale problem results.  
+    
+The RVE problem is prepared, assembled and solved over a time series using the given `RVE`, `LoadCase`, `t_total`, `Δt` . By default `t_total` is set to `1` and `Δt` to `0.1`.
 
-# Arguments
-- `rve`:    Object for solving function `prepare_setup`,
-- `load`:   Object `LoadCase`.
+Results are stored in a `NamedTuple` with fields total time `t`  and solution vector `a`.
 
 """
 function solve_time_series(rve::RVE{dim}, load::LoadCase{dim};  Δt=0.1, t_total=1) where {dim}

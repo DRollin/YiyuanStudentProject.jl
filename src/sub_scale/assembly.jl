@@ -1,23 +1,9 @@
 """
-        assemble_K_M_f!(setup::RVESetup)
+    assemble_K_M_f!(setup::RVESetup)
 
-Return the assembled mass matrix `M` and stiffness matrix `K`.
+Return the assembled stiffness matrix `K`, mass matrix `M` and right hand side vector `f`.
 
-# Arguments:
-- `setup`:   A preconfigured object that defined for RVE assembly. Fields from `setup` are used in this function:
-    - `phasesetups`: A preconfigured object type that defined for elementweise assembly,
-    - `M`:           Initialized global mass matrix to be assembled,
-    - `K`:           Initialized global stiffness matrix to be assembled,
-    - `f`:           Initialized global right hand side vector to be assembled.
-
-# Implementation Details:
-Create a `CSCAssembler` for both K, f, and M.
-
-Do the whole assembly for all the phases:
-    for all cells update the cell values for all the unknown fields and fill zeros to the 
-    do element assembly,
-    return assembled `Kₑ`, `Mₑ` and `fₑ`.
-
+The assembly of all cells across all material phases is performed using the given input `RVESetup`.
 """
 function assemble_K_M_f!(setup::RVESetup)
 	(; phasesetups, K, M, f) = setup
@@ -48,39 +34,11 @@ function assemble_K_M_f!(assembler_Kf, assembler_M, setup::PhaseSetup{dim}) wher
 end
 
 """
-        assemble_element!(setup::PhaseSetup)
+    assemble_element!(setup::PhaseSetup)
 
-Return the assembled mass matrix for coupling between the chemical potantial and the concentration fields as well as the stiffness matrix.
+Return the assembled local stiffness and mass matrices (`Kₑ`, `Mₑ`), the local right hand side vector (`fₑ`).  
 
-# Arguments:
-- `setup`:  a preconfigured object type that defined for elementweise assembly. 
-
-# Implementation Details:
-For each quadrature point the element volume is computed. Furthermore for each base function in corresponding field,
-evaluate the shape function for the test function. The nodal value of a certain unknown field is then computed for each base funtion in that field.
-
-Then the coupling subarrays are computed as:
-
-Kₑuu = ∫(δNϵi ⊡ E ⊡ Nϵj) * dΩ
-
-Kₑuc = ∫-(δNϵi ⊡ E ⊡ (αᶜʰ*(Ncj - cʳᵉᶠ))) * dΩ
-
-Kₑcu = ∫(δNci * (αᶜʰ ⊡ E ⊡ Nϵj))* dΩ
-
-Kₑcc = ∫-(δNci * (k*(Ncj-cʳᵉᶠ) + αᶜʰ ⊡ E ⊡(αᶜʰ*(Ncj - cʳᵉᶠ))))* dΩ
-
-Kₑcμ = ∫(δNci * (Nμj - μʳᵉᶠ)) * dΩ
-
-Kₑμμ = ∫(δN∇μi ⋅ M ⋅ N∇μj) * dΩ
-
-Mₑμc = ∫(Ncj * δNμi) * dΩ
-
-where:
-- `Nxj`:     Shape function of field x 
-- `δNxi`:    Shape function for x field test function
-- `N∇xj`:    Gradient of shape function of field x 
-- `δN∇xi`:   Gradient of shape function for test function of field x
-- `dΩ`:      Determinant of the Jacobian times the quadrature weight
+Different contributions of `Kₑ`, `Mₑ` and `fₑ` are computed with stored material parameters and necessary assembly setups provided by the input `PhaseSetup`.
 """
 function assemble_element!(setup::PhaseSetup)
     (; cv, nbf, material, Kₑ, Mₑ, fₑ, subarrays) = setup

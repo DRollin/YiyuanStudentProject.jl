@@ -1,22 +1,9 @@
 """
         assemble_macro_K!(setup::SolveSetup{dim}, Δt) where {dim}
     
-Return the whole ``SolveSetup`` with assembled stiffness matrix ``K``.
+Return the whole ``SolveSetup`` with assembled stiffness matrix `K`.
 
-# Arguments:
-- `setup`:   ``SolveSetup``: A preconfigured object that defined for macro scale problem assembly. Fields from `setup` are used in this function:
-    - `assemblysetup`: ``AssemblySetup``: A preconfigured object type that defined for elementweise assembly,
-    - `K`:           Initialized global stiffness matrix to be assembled,
-    - `aⁿ`:           Initialized global solution vector for calling the element solution vector
-
-
-# Implementation Details:
-Create a `CSCAssembler` for K.
-
-Do the whole assembly:
-    for all cells update the cell values for all the unknown fields and fill zeros to the 
-    do element assembly, aliening the element solution vector with the global solution vector.
-    return assembled `Kₑ`.
+The assembly of all cells is performed using the given input `RVESetup`.
 
 """
 function assemble_macro_K!(setup::SolveSetup{dim}, Δt) where {dim}
@@ -44,28 +31,11 @@ end
 """
         assemble_macro_element!(setup::AssemblySetup{dim}, Δt, gpdata::Vector{GaussPointData{dim}}) where {dim}
 
-Return the assembled stiffness matrix.
+Return the assembled stiffness matrix `Kₑ`.
 
-# Arguments:
-- `setup`:  a preconfigured object type that defined for elementweise assembly. 
+New variationally consistent macro scale fileds `σ̄`, `ċ`, `ċ₂`, and `j̄` are computed using the corresponding `GaussPointData{dim}` and `LoadCase`, which consists of the quadrature point values `ε̄`, `μ̄`, `ζ̄`.
 
-# Implementation Details:
-The local unknowns μₑ and uₑ are passed for creating the step dependent macro scale variables for each quadrature point. 
-Object ``LoadCase`` is generated using the macro scale variables `μ̄ `, `ζ̄ `and `ε̄ `.
-For each quadrature point the element volume is generated. The variationally consistent macro-scale (homogenized) fields σ̄, ċ, ċ₂, j̄ are computed passing the upscaling function ``compute_effective_response!``.
-Furthermore for each base function in corresponding field, evaluate the shape function for the test function. 
-
-Then the coupling subarrays are computed as:
-
-Kₑuu = ∫(δNϵi ⊡ σ̄ ) * dΩ
-
-Kₑμμ = ∫(δNμi * ċ - δN∇μi ⋅ (ċ₂ - j̄) ) * dΩ
-
-
-where:
-- `δNxi`:    Shape function for x field test function
-- `δN∇xi`:   Gradient of shape function for test function of field x
-- `dΩ`:      Determinant of the Jacobian times the quadrature weight
+Different contributions of `Kₑ` are computed with these updated macro scale fileds and necessary assembly setups provided by the input `AssemblySetup`.
 """
 function assemble_macro_element!(setup::AssemblySetup{dim}, Δt, gpdata::Vector{GaussPointData{dim}}) where {dim}
     (; dh, cv, nbf, Kₑ, subarrays, rvesetup, aₑ) = setup

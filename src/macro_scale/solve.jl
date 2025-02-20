@@ -1,26 +1,16 @@
 
 """
-    solve_macro_problem(grid::Grid{dim}, rvesetup::RVESetup{dim}; Δt=0.1, t_total=1) where {dim}
+    solve_macro_problem(grid::Grid{dim}, rvesetup::RVESetup{dim}, rve::RVE{dim}, bc::MacroBCParams; Δt=0.1, t_total=1) where {dim}
 
-return solution storage and the macro scale setup for result visualizing. 
-Compute the solution storage in a `NamedTuple` with fields `t` total time and `a` solution vector series contain `u` displacement and `μ` chemical potantial
-for the whole time series with a certain time step width. 
+Return results throughout the time stepping process for visualizing the fine scale problem results.  
+    
+The macro scale problem is prepared, assembled and solved over a time series using the given `grid`, `RVESetup`, `RVE`, `MacroBCParams`, `t_total`, `Δt` . By default `t_total` is set to `1` and `Δt` to `0.1`.
 
-# Arguments
-- `grid`:       Grid{dim}: The macro scale grid,
-- `rvesetup`:   RVESetup{dim}: The object containing setups for solving rve problem,
-- `Δt`:         The time step size,
-- `t-total`:    the total computational time.
+Results on both macro scale and the reference RVE are stored in a `NamedTuple` with fields total time `t`  and solution vector `a` respectively.
 
+The time dependent boundary condition is updated to the global stiffness matrix and force vector as well as the solution vector.
 
-# Implementation Details
-Initialize the solution storage. Do time stepping with updating the boundary condition.
-
-The updated boundary condition is then applied to the global stiffness matrix and force vector as well as the solution vector.
-
-Using solver from Pardiso.jl for eventually ill conditioned system matrices. Update the boundary condition on the result vector.
-
-Copy the new solution vector in the storage with the corresponding time step.
+Using solver from ``Pardiso.jl`` for eventually ill conditioned system matrices.
 
 """
 function solve_macro_problem(grid::Grid{dim}, rvesetup::RVESetup{dim}, rve::RVE{dim}, bc::MacroBCParams; Δt=0.1, t_total=1) where {dim}

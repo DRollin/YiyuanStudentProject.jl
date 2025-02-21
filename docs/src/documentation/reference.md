@@ -1,4 +1,4 @@
-# [Chemo-Mechanical Problem - References](@id documentation-references)
+# [References](@id documentation-references)
 ```@bibliography
 *
 ```

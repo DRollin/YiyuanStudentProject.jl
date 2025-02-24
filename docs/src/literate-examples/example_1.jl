@@ -17,7 +17,7 @@ using YiyuanStudentProject
 #
 # ## Preparation
 # ### Sub Scale (RVE)
-# Setting up the dimension, material parameters. The material parameters are cataloged with `P` for particles and `M` for matrix and 
+# Setting up the dimension, material parameters for generating the grid and further problem solving. The material parameters are cataloged with `P` for particles and `M` for matrix and 
 # are characterized using simple values for now.
 # 
 #
